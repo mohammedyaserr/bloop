@@ -86,7 +86,7 @@ export default function Register() {
 
     // Debounce: Wait 500ms after user stops typing to call API
     const delayTimer = setTimeout(() => {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8081';
+      const apiUrl = import.meta.env.VITE_API_URL || 'https://bloop-af6u.onrender.com';
       axios.get(`${apiUrl}/api/auth/check-username/${normalized}`)
         .then(res => {
           if (res.data.available) {
@@ -284,7 +284,7 @@ export default function Register() {
       setIsLoading(true);
       
       // Real backend registration API call using Axios
-      axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:8081'}/api/auth/register`, {
+      axios.post(`${import.meta.env.VITE_API_URL || 'https://bloop-af6u.onrender.com'}/api/auth/register`, {
         fullName: formData.fullName,
         email: formData.email,
         username: formData.username,
@@ -374,7 +374,7 @@ export default function Register() {
         .then(userinfoRes => {
           const profile = userinfoRes.data;
           // Post the retrieved profile details straight to registration backend
-          axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:8081'}/api/auth/register`, {
+          axios.post(`${import.meta.env.VITE_API_URL || 'https://bloop-af6u.onrender.com'}/api/auth/register`, {
             fullName: profile.name || 'Google User',
             email: profile.email,
             username: profile.email.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '') + Math.floor(Math.random() * 100),
@@ -418,7 +418,7 @@ export default function Register() {
 
     // Fallback: If JWT credentials ID token response
     if (response && response.credential) {
-      axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:8081'}/api/auth/google-register`, {
+      axios.post(`${import.meta.env.VITE_API_URL || 'https://bloop-af6u.onrender.com'}/api/auth/google-register`, {
         credential: response.credential
       })
       .then(res => {

@@ -399,7 +399,7 @@ export default function ChatingHome() {
   // Fetch registered users from backend on mount and Compose opening
   useEffect(() => {
     setLoadingUsers(true);
-    axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8081'}/api/auth/users`)
+    axios.get(`${import.meta.env.VITE_API_URL || 'https://bloop-af6u.onrender.com'}/api/auth/users`)
       .then(response => {
         setLoadingUsers(false);
         if (response.data && response.data.users) {
@@ -450,7 +450,7 @@ export default function ChatingHome() {
 
   const fetchSearchHistory = () => {
     const userId = getCurrentUserId();
-    axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8081'}/api/auth/search-history`, {
+    axios.get(`${import.meta.env.VITE_API_URL || 'https://bloop-af6u.onrender.com'}/api/auth/search-history`, {
       params: { userId }
     })
     .then(res => {
@@ -470,7 +470,7 @@ export default function ChatingHome() {
 
   const fetchConversations = () => {
     const userId = getCurrentUserId();
-    axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8081'}/api/auth/conversations/${userId}`)
+    axios.get(`${import.meta.env.VITE_API_URL || 'https://bloop-af6u.onrender.com'}/api/auth/conversations/${userId}`)
       .then(response => {
         if (response.data && response.data.conversations) {
           const mapped = response.data.conversations.map(c => ({
@@ -511,7 +511,7 @@ export default function ChatingHome() {
   useEffect(() => {
     fetchSearchHistory();
     fetchConversations();
-    axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8081'}/api/auth/users`)
+    axios.get(`${import.meta.env.VITE_API_URL || 'https://bloop-af6u.onrender.com'}/api/auth/users`)
       .then(response => {
         if (response.data && response.data.users) {
           setAllUsers(response.data.users);
@@ -534,7 +534,7 @@ export default function ChatingHome() {
 
   // Initialize Socket.IO connection exactly once on mount
   useEffect(() => {
-    const socketUrl = import.meta.env.VITE_API_URL || 'http://localhost:8081';
+    const socketUrl = import.meta.env.VITE_API_URL || 'https://bloop-af6u.onrender.com';
     const socket = io(socketUrl, {
       transports: ['websocket', 'polling']
     });
@@ -645,7 +645,7 @@ export default function ChatingHome() {
         
         // Auto-mark as read
         const userId = getCurrentUserId();
-        axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:8081'}/api/auth/messages/read`, {
+        axios.post(`${import.meta.env.VITE_API_URL || 'https://bloop-af6u.onrender.com'}/api/auth/messages/read`, {
           conversationId,
           userId
         }).then(() => {
@@ -703,7 +703,7 @@ export default function ChatingHome() {
   const handleMarkAsRead = (chatId) => {
     if (!chatId) return;
     const userId = getCurrentUserId();
-    axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:8081'}/api/auth/messages/read`, {
+    axios.post(`${import.meta.env.VITE_API_URL || 'https://bloop-af6u.onrender.com'}/api/auth/messages/read`, {
       conversationId: chatId,
       userId
     })
@@ -742,7 +742,7 @@ export default function ChatingHome() {
           setIsTyping(true);
         }
         const userId = getCurrentUserId();
-        axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8081'}/api/auth/messages/${activeChatId}`)
+        axios.get(`${import.meta.env.VITE_API_URL || 'https://bloop-af6u.onrender.com'}/api/auth/messages/${activeChatId}`)
           .then(response => {
             if (response.data && response.data.messages) {
               const messagesMapped = response.data.messages.map(m => ({
@@ -795,7 +795,7 @@ export default function ChatingHome() {
   const handleClearRecentSearches = (e) => {
     e.stopPropagation();
     const userId = getCurrentUserId();
-    axios.delete(`${import.meta.env.VITE_API_URL || 'http://localhost:8081'}/api/auth/search-history`, {
+    axios.delete(`${import.meta.env.VITE_API_URL || 'https://bloop-af6u.onrender.com'}/api/auth/search-history`, {
       params: { userId }
     })
     .then(() => {
@@ -819,7 +819,7 @@ export default function ChatingHome() {
     const userId = getCurrentUserId();
 
     // Save search history entry to database
-    axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:8081'}/api/auth/search-history`, {
+    axios.post(`${import.meta.env.VITE_API_URL || 'https://bloop-af6u.onrender.com'}/api/auth/search-history`, {
       userId,
       searchedUserId: user.id
     })
@@ -834,7 +834,7 @@ export default function ChatingHome() {
     setIsStartingChat(user.id);
 
     // Call POST /conversations to check/create the conversation in DB
-    axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:8081'}/api/auth/conversations`, {
+    axios.post(`${import.meta.env.VITE_API_URL || 'https://bloop-af6u.onrender.com'}/api/auth/conversations`, {
       senderId: userId,
       receiverId: user.id
     })
@@ -863,7 +863,7 @@ export default function ChatingHome() {
     const userId = getCurrentUserId();
     
     // Call POST /conversations to check/create the conversation in DB
-    axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:8081'}/api/auth/conversations`, {
+    axios.post(`${import.meta.env.VITE_API_URL || 'https://bloop-af6u.onrender.com'}/api/auth/conversations`, {
       senderId: userId,
       receiverId: user.id
     })
@@ -907,7 +907,7 @@ export default function ChatingHome() {
       members: selectedMembers.map(m => m.id)
     };
 
-    axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:8081'}/api/auth/groups`, payload)
+    axios.post(`${import.meta.env.VITE_API_URL || 'https://bloop-af6u.onrender.com'}/api/auth/groups`, payload)
       .then(response => {
         if (response.data && response.data.success) {
           const newGroup = response.data.group;
@@ -931,7 +931,7 @@ export default function ChatingHome() {
 
   const fetchGroupInfo = (groupId) => {
     setLoadingGroupInfo(true);
-    axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:8081'}/api/auth/groups/${groupId}/info`)
+    axios.get(`${import.meta.env.VITE_API_URL || 'https://bloop-af6u.onrender.com'}/api/auth/groups/${groupId}/info`)
       .then(response => {
         if (response.data && response.data.success) {
           setGroupInfoDetails(response.data.group);
@@ -947,7 +947,7 @@ export default function ChatingHome() {
 
   const handleLeaveGroup = (groupId) => {
     const userId = getCurrentUserId();
-    axios.delete(`${import.meta.env.VITE_API_URL || 'http://localhost:8081'}/api/auth/groups/${groupId}/members/${userId}`)
+    axios.delete(`${import.meta.env.VITE_API_URL || 'https://bloop-af6u.onrender.com'}/api/auth/groups/${groupId}/members/${userId}`)
       .then(() => {
         fetchConversations();
         setActiveChatId(null);
@@ -960,7 +960,7 @@ export default function ChatingHome() {
 
   const handleDeleteGroup = (groupId) => {
     const userId = getCurrentUserId();
-    axios.delete(`${import.meta.env.VITE_API_URL || 'http://localhost:8081'}/api/auth/groups/${groupId}`, {
+    axios.delete(`${import.meta.env.VITE_API_URL || 'https://bloop-af6u.onrender.com'}/api/auth/groups/${groupId}`, {
       data: { userId }
     })
       .then(() => {
@@ -1178,7 +1178,7 @@ export default function ChatingHome() {
     const senderId = getCurrentUserId();
     const conversationId = activeChatId;
 
-    axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:8081'}/api/auth/messages`, {
+    axios.post(`${import.meta.env.VITE_API_URL || 'https://bloop-af6u.onrender.com'}/api/auth/messages`, {
       senderId,
       conversationId,
       text: contentString
@@ -1407,7 +1407,7 @@ export default function ChatingHome() {
                         onClick={() => {
                           if (confirm('Log out from Bloop session?')) {
                             const userId = getCurrentUserId();
-                            axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:8081'}/api/auth/logout`, { userId })
+                            axios.post(`${import.meta.env.VITE_API_URL || 'https://bloop-af6u.onrender.com'}/api/auth/logout`, { userId })
                               .finally(() => {
                                 localStorage.removeItem('bloop_user');
                                 window.location.href = '/login';

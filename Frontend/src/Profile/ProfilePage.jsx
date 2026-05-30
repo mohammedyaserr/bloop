@@ -148,7 +148,7 @@ export default function ProfilePage() {
     if (resendTimer > 0) return;
     setOtpLoading(true);
     setOtpError('');
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8081';
+    const apiUrl = import.meta.env.VITE_API_URL || 'https://bloop-af6u.onrender.com';
     
     axios.post(`${apiUrl}/api/auth/send-email-otp`, {
       userId: currentUser.id,
@@ -178,7 +178,7 @@ export default function ProfilePage() {
 
     setOtpLoading(true);
     setOtpError('');
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8081';
+    const apiUrl = import.meta.env.VITE_API_URL || 'https://bloop-af6u.onrender.com';
 
     axios.post(`${apiUrl}/api/auth/verify-email-otp`, {
       userId: currentUser.id,
@@ -258,7 +258,7 @@ export default function ProfilePage() {
 
     // Debounce: Wait 500ms after user stops typing to call API
     const delayTimer = setTimeout(() => {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8081';
+      const apiUrl = import.meta.env.VITE_API_URL || 'https://bloop-af6u.onrender.com';
       axios.get(`${apiUrl}/api/auth/check-username/${normalized}?excludeUserId=${currentUser.id}`)
         .then(res => {
           if (res.data.available) {
@@ -309,7 +309,7 @@ export default function ProfilePage() {
 
     // Debounce: Wait 500ms after user stops typing to call API
     const delayTimer = setTimeout(() => {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8081';
+      const apiUrl = import.meta.env.VITE_API_URL || 'https://bloop-af6u.onrender.com';
       axios.get(`${apiUrl}/api/auth/check-phone/${encodeURIComponent(cleaned)}?excludeUserId=${currentUser.id}`)
         .then(res => {
           if (res.data.available) {
@@ -361,7 +361,7 @@ export default function ProfilePage() {
   }, [loading]);
 
   const fetchUserProfile = (userId) => {
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8081';
+    const apiUrl = import.meta.env.VITE_API_URL || 'https://bloop-af6u.onrender.com';
     axios.get(`${apiUrl}/api/auth/profile/${userId}`)
       .then(res => {
         if (res.data && res.data.profile) {
@@ -473,7 +473,7 @@ export default function ProfilePage() {
     }
 
     setSaving(true);
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8081';
+    const apiUrl = import.meta.env.VITE_API_URL || 'https://bloop-af6u.onrender.com';
     
     // Package update payload (Forces saving current database email in the main PUT request first)
     const payload = {
@@ -542,7 +542,7 @@ export default function ProfilePage() {
 
   const handleLogout = () => {
     if (!currentUser) return;
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8081';
+    const apiUrl = import.meta.env.VITE_API_URL || 'https://bloop-af6u.onrender.com';
     
     axios.post(`${apiUrl}/api/auth/logout`, { userId: currentUser.id })
       .then(() => {
