@@ -221,7 +221,7 @@ const allowedOrigins = process.env.CORS_ORIGIN
 app.use(cors(
     {
         origin: allowedOrigins,
-        methods:["POST", "GET", "PUT", "DELETE"],
+        methods:["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         credentials:true
     }
 ))
