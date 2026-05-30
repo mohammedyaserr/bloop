@@ -121,7 +121,7 @@ export default function Login() {
       setIsLoading(true);
       
       // Real backend login API call using Axios
-      axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:8081'}/api/auth/login`, {
+      axios.post(`${import.meta.env.VITE_API_URL || 'https://bloop-af6u.onrender.com'}/api/auth/login`, {
         emailOrUsername: formData.emailOrUsername,
         password: formData.password
       })
