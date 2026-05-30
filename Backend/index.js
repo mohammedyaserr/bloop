@@ -216,7 +216,7 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 const allowedOrigins = process.env.CORS_ORIGIN 
   ? process.env.CORS_ORIGIN.split(',') 
-  : ["http://localhost:5173", "localhost:5173"];
+  : ["http://localhost:5173", "localhost:5173", "https://bloop-af6u.onrender.com"];
 
 app.use(cors(
     {
