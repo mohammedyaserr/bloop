@@ -1,0 +1,238 @@
+/* ==========================================
+   🌈 BLOOP PREMIUM PROFILE DASHBOARD STYLES
+   ========================================== */
+
+.profile-page-wrapper {
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background-color: #f8fafc;
+  color: #334155;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  position: relative;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 🎨 1. Ambient Lighting & Mesh Background Orbs - Reduced dominance, placed perfectly behind cards */
+.profile-mesh-glow-1 {
+  position: absolute;
+  top: -15%;
+  left: 25%;
+  width: 40vw;
+  height: 40vw;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(167, 139, 250, 0.12) 0%, rgba(167, 139, 250, 0) 70%);
+  filter: blur(100px);
+  pointer-events: none;
+  animation: mesh-float-1 20s infinite alternate ease-in-out;
+  z-index: 1;
+}
+
+.profile-mesh-glow-2 {
+  position: absolute;
+  bottom: -10%;
+  right: -5%;
+  width: 35vw;
+  height: 35vw;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(6, 182, 212, 0.08) 0%, rgba(6, 182, 212, 0) 70%);
+  filter: blur(100px);
+  pointer-events: none;
+  animation: mesh-float-2 18s infinite alternate ease-in-out;
+  z-index: 1;
+}
+
+.profile-mesh-glow-3 {
+  position: absolute;
+  top: 30%;
+  left: -5%;
+  width: 30vw;
+  height: 30vw;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(244, 63, 94, 0.05) 0%, rgba(244, 63, 94, 0) 75%);
+  filter: blur(90px);
+  pointer-events: none;
+  animation: mesh-float-3 15s infinite alternate ease-in-out;
+  z-index: 1;
+}
+
+@keyframes mesh-float-1 {
+  0% { transform: translateY(0px) scale(1); }
+  100% { transform: translateY(30px) scale(1.1); }
+}
+
+@keyframes mesh-float-2 {
+  0% { transform: translateY(0px) scale(1.05); }
+  100% { transform: translateY(-30px) scale(0.95); }
+}
+
+@keyframes mesh-float-3 {
+  0% { transform: translateX(0px) scale(0.95); }
+  100% { transform: translateX(25px) scale(1.05); }
+}
+
+/* 🔌 2. Workspace Loader Layer */
+.profile-loading-screen {
+  min-height: 100vh;
+  background-color: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.profile-loading-glow-1 {
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  background: rgba(99, 102, 241, 0.1);
+  filter: blur(80px);
+  border-radius: 50%;
+  top: 25%;
+  left: 20%;
+}
+
+.profile-loading-glow-2 {
+  position: absolute;
+  width: 250px;
+  height: 250px;
+  background: rgba(6, 182, 212, 0.08);
+  filter: blur(80px);
+  border-radius: 50%;
+  bottom: 25%;
+  right: 20%;
+}
+
+/* 📰 3. Sticky Frosted Header - Compact and Elegant (54px) */
+.profile-header-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 54px;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+  z-index: 100;
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.01);
+}
+
+/* 🪟 4. Glassmorphism Card Containers - Aligned Top Spacing, Rounded 28px */
+.profile-sidebar-card {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border: 1.5px solid rgba(255, 255, 255, 0.8);
+  border-radius: 28px;
+  box-shadow: 0 8px 32px -4px rgba(148, 163, 184, 0.1);
+  overflow: hidden;
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border: 1.5px solid rgba(255, 255, 255, 0.8);
+  border-radius: 28px;
+  box-shadow: 0 12px 40px -6px rgba(148, 163, 184, 0.1);
+}
+
+/* ✏️ 5. Clean Profile Inputs (Frosted Rounded Pill design) */
+.profile-form-input {
+  width: 100%;
+  padding: 8px 14px;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1.5px solid rgba(226, 232, 240, 0.7);
+  border-radius: 12px;
+  color: #334155;
+  font-size: 12.5px;
+  font-weight: 500;
+  transition: all 0.25s ease;
+  box-shadow: inset 0 1px 2px rgba(148, 163, 184, 0.01);
+}
+
+.profile-form-input:focus {
+  outline: none;
+  background: #ffffff;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12), 0 2px 8px rgba(99, 102, 241, 0.04);
+}
+
+.profile-form-input::placeholder {
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+/* 🚀 6. Primary Save Changes Action Button (Elegant Rounded Pill) */
+.profile-save-btn {
+  padding: 9px 20px;
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 800;
+  border-radius: 9999px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 14px -3px rgba(99, 102, 241, 0.35);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.profile-save-btn:hover {
+  box-shadow: 0 8px 18px -4px rgba(99, 102, 241, 0.45);
+  transform: translateY(-0.5px);
+}
+
+.profile-save-btn:active {
+  transform: translateY(0.5px);
+}
+
+/* 🍞 7. Glassmorphism Success Toast */
+.profile-toast-banner {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 10px 20px;
+  border-radius: 9999px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 1000;
+}
+
+/* 📱 8. Responsiveness Rules */
+@media (max-width: 768px) {
+  .profile-mesh-glow-1 {
+    width: 70vw;
+    height: 70vw;
+    top: -5%;
+  }
+
+  .profile-mesh-glow-2 {
+    width: 65vw;
+    height: 65vw;
+  }
+
+  .profile-mesh-glow-3 {
+    display: none;
+  }
+
+  .profile-sidebar-card {
+    border-radius: 24px;
+  }
+
+  .glass-card {
+    border-radius: 24px;
+  }
+}

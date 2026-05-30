@@ -1,0 +1,179 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+
+/* Apply Light Mode Typography & Base Styles */
+.login-container {
+  font-family: 'Outfit', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  background-color: #fbfbfc; /* Clean warm alabaster white */
+  color: #0f172a;
+}
+
+/* Warm Dynamic Aurora Gradient Background Animation */
+@keyframes warmPastelAurora {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.seamless-cyan-bg {
+  background: radial-gradient(circle at 10% 20%, rgba(207, 250, 254, 0.45) 0%, transparent 45%),
+              radial-gradient(circle at 90% 10%, rgba(224, 242, 254, 0.4) 0%, transparent 50%),
+              radial-gradient(circle at 50% 50%, rgba(204, 251, 241, 0.45) 0%, transparent 60%),
+              radial-gradient(circle at 80% 80%, rgba(241, 245, 249, 0.3) 0%, transparent 50%),
+              radial-gradient(circle at 20% 80%, rgba(186, 230, 253, 0.3) 0%, transparent 45%),
+              #f8fafc;
+  background-size: 200% 200%;
+  animation: warmPastelAurora 20s infinite ease-in-out;
+}
+
+/* Premium Glassmorphism Card with layered drop shadow and thin glass borders */
+.frosted-light-card {
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+  border: 1px solid rgba(6, 182, 212, 0.2); /* Thin cyan glowing border */
+  box-shadow: 0 15px 50px -10px rgba(148, 163, 184, 0.12),
+              0 0 0 1px rgba(6, 182, 212, 0.03),
+              inset 0 1.5px 0.5px rgba(255, 255, 255, 0.95);
+  position: relative;
+  overflow: hidden;
+}
+
+/* High-fidelity hover glow effects */
+.frosted-light-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.03), rgba(20, 184, 166, 0.03));
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Glass inputs for light mode with interactive cyan/lavender glow */
+.light-input {
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  color: #0f172a;
+}
+
+.light-input:focus {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(6, 182, 212, 0.4);
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.08),
+              inset 0 1px 0px rgba(255, 255, 255, 0.8);
+}
+
+/* Floating animation styles */
+@keyframes floatScale {
+  0%, 100% {
+    transform: translateY(0px) scale(1);
+  }
+  50% {
+    transform: translateY(-8px) scale(1.02);
+  }
+}
+
+.float-visual {
+  animation: floatScale 8s infinite ease-in-out;
+}
+
+/* Shimmer keyframes for gradient button */
+@keyframes shimmerGradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Vibrant Shimmer gradient button */
+.cyan-gradient-btn {
+  background: linear-gradient(
+    135deg,
+    #06b6d4 0%,   /* Cyan */
+    #0ea5e9 35%,  /* Sky Blue */
+    #0284c7 70%,  /* Ocean Blue */
+    #14b8a6 100%  /* Teal */
+  );
+  background-size: 200% 200%;
+  animation: shimmerGradient 5s infinite ease-in-out;
+  box-shadow: 0 4px 15px rgba(6, 182, 212, 0.25);
+  transition: all 0.3s ease;
+}
+
+.cyan-gradient-btn:hover {
+  box-shadow: 0 8px 25px rgba(6, 182, 212, 0.4), 0 0 8px rgba(14, 165, 233, 0.3);
+}
+
+/* Abstract Glass message card styles with soft pastel shadows */
+.abstract-msg-card {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 10px 30px rgba(148, 163, 184, 0.06),
+              0 0 0 1px rgba(99, 102, 241, 0.01),
+              inset 0 1px 0px rgba(255, 255, 255, 0.6);
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(241, 245, 249, 0.5);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.15);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.3);
+}
+
+/* Path dashed stroke connection lines animation */
+@keyframes dashFlow {
+  to {
+    stroke-dashoffset: -20;
+  }
+}
+
+.dashed-line {
+  stroke-dasharray: 6, 6;
+  animation: dashFlow 2s infinite linear;
+}
+
+/* Tiny particle animations */
+@keyframes particleFloat {
+  0%, 100% {
+    transform: translate(0, 0);
+    opacity: 0.2;
+  }
+  50% {
+    transform: translate(10px, -15px);
+    opacity: 0.7;
+  }
+}
+
+.particle {
+  animation: particleFloat 6s infinite ease-in-out;
+}

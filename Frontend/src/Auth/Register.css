@@ -1,0 +1,249 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+
+/* Apply Light Mode Typography & Base Styles */
+.register-container {
+  font-family: 'Outfit', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  background-color: #fbfbfc; /* Warm white */
+  color: #0f172a;
+}
+
+/* Warm Dynamic Aurora Gradient Background Animation */
+@keyframes warmPastelAurora {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.seamless-cosmic-bg {
+  background: radial-gradient(circle at 10% 20%, rgba(243, 232, 255, 0.45) 0%, transparent 45%),
+              radial-gradient(circle at 90% 10%, rgba(254, 205, 211, 0.4) 0%, transparent 50%),
+              radial-gradient(circle at 50% 50%, rgba(224, 242, 254, 0.45) 0%, transparent 60%),
+              radial-gradient(circle at 80% 80%, rgba(253, 186, 116, 0.3) 0%, transparent 50%),
+              radial-gradient(circle at 20% 80%, rgba(217, 70, 239, 0.25) 0%, transparent 45%),
+              #fbfbfc;
+  background-size: 200% 200%;
+  animation: warmPastelAurora 20s infinite ease-in-out;
+}
+
+/* Premium Glassmorphism Card with layered drop shadow and thin glass borders */
+.frosted-light-card {
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 15px 50px -10px rgba(148, 163, 184, 0.12),
+              0 0 0 1px rgba(99, 102, 241, 0.03),
+              inset 0 1.5px 0.5px rgba(255, 255, 255, 0.95);
+  position: relative;
+  overflow: hidden;
+}
+
+.frosted-light-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.03), rgba(244, 63, 94, 0.03));
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Glass inputs for light mode with interactive focus glow */
+.light-input {
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  color: #0f172a;
+}
+
+.light-input:focus {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(99, 102, 241, 0.4);
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.08),
+              inset 0 1px 0px rgba(255, 255, 255, 0.8);
+}
+
+/* Floating animation styles */
+@keyframes floatScale {
+  0%, 100% {
+    transform: translateY(0px) scale(1);
+  }
+  50% {
+    transform: translateY(-8px) scale(1.02);
+  }
+}
+
+.float-visual {
+  animation: floatScale 8s infinite ease-in-out;
+}
+
+/* Vibrant animated gradient button */
+@keyframes shimmerGradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.vibrant-gradient-btn {
+  background: linear-gradient(
+    135deg,
+    #8b5cf6 0%,   /* Lavender/Purple */
+    #ec4899 35%,  /* Electric Pink */
+    #f97316 70%,  /* Peach/Orange */
+    #38bdf8 100%  /* Sky Blue */
+  );
+  background-size: 200% 200%;
+  animation: shimmerGradient 5s infinite ease-in-out;
+  box-shadow: 0 4px 15px rgba(236, 72, 153, 0.25);
+  transition: all 0.3s ease;
+}
+
+.vibrant-gradient-btn:hover {
+  box-shadow: 0 8px 25px rgba(236, 72, 153, 0.4), 0 0 8px rgba(139, 92, 246, 0.3);
+}
+
+/* Orbit Animations */
+@keyframes rotateClockwise {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes rotateCounterClockwise {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+.orbit-cw {
+  animation: rotateClockwise 35s infinite linear;
+}
+
+.orbit-ccw {
+  animation: rotateCounterClockwise 45s infinite linear;
+}
+
+/* Portal Pulse Animation */
+@keyframes portalPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.25;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.5;
+  }
+}
+
+.portal-ring {
+  animation: portalPulse 4s infinite ease-in-out;
+}
+
+/* Holographic Identity Card */
+.holo-id-card {
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 10px 30px rgba(139, 92, 246, 0.08),
+              inset 0 1px 0px rgba(255, 255, 255, 0.5);
+  position: relative;
+  overflow: hidden;
+}
+
+.holo-id-card::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    115deg,
+    transparent 20%,
+    rgba(236, 72, 153, 0.05) 40%,
+    rgba(139, 92, 246, 0.05) 50%,
+    rgba(56, 189, 248, 0.05) 60%,
+    transparent 80%
+  );
+  animation: rotateClockwise 12s infinite linear;
+  pointer-events: none;
+}
+
+/* Crystal polygon style */
+.holographic-crystal {
+  clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.6) 0%, rgba(253, 186, 116, 0.25) 50%, rgba(217, 70, 239, 0.3) 100%);
+  border: 1.5px solid rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  box-shadow: inset 0 0 12px rgba(255, 255, 255, 0.5), 0 8px 24px rgba(139, 92, 246, 0.08);
+}
+
+/* Path dashed stroke connection lines animation */
+@keyframes dashFlow {
+  to {
+    stroke-dashoffset: -20;
+  }
+}
+
+.dashed-line {
+  stroke-dasharray: 6, 6;
+  animation: dashFlow 2s infinite linear;
+}
+
+/* Tiny particle animations */
+@keyframes particleFloat {
+  0%, 100% {
+    transform: translate(0, 0);
+    opacity: 0.2;
+  }
+  50% {
+    transform: translate(10px, -15px);
+    opacity: 0.7;
+  }
+}
+
+.particle {
+  animation: particleFloat 6s infinite ease-in-out;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(241, 245, 249, 0.5);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.15);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.3);
+}
