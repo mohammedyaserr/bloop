@@ -497,33 +497,20 @@ export default function Register() {
   return (
     <div className="register-container seamless-cosmic-bg relative min-h-screen w-full grid grid-cols-1 lg:grid-cols-12 overflow-x-hidden">
       
-      {/* Layer 1: Giant Full-Page Animated Glowing Orbs & Mesh */}
-      <div className="absolute top-[10%] left-[5%] w-[450px] h-[450px] rounded-full bg-violet-300/20 blur-[120px] pointer-events-none -z-10 animate-float-1" />
-      <div className="absolute bottom-[10%] right-[5%] w-[420px] h-[420px] rounded-full bg-sky-200/25 blur-[130px] pointer-events-none -z-10 animate-float-2" />
-      <div className="absolute top-[30%] right-[30%] w-[380px] h-[380px] rounded-full bg-pink-200/15 blur-[110px] pointer-events-none -z-10 animate-float-3" />
-      <div className="absolute bottom-[25%] left-[25%] w-[300px] h-[300px] rounded-full bg-orange-200/15 blur-[100px] pointer-events-none -z-10" />
 
-      {/* Ambient Sparks / Sparkles / Particles floating across the entire page */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">
-        <div className="absolute w-2 h-2 rounded-full bg-violet-400/40 left-[12%] top-[20%] particle" style={{ animationDelay: '0.5s', animationDuration: '6s' }} />
-        <div className="absolute w-3 h-3 rounded-full bg-pink-400/30 left-[75%] top-[40%] particle" style={{ animationDelay: '2s', animationDuration: '8s' }} />
-        <div className="absolute w-2 h-2 rounded-full bg-orange-300/40 left-[25%] top-[75%] particle" style={{ animationDelay: '1.2s', animationDuration: '7s' }} />
-        <div className="absolute w-2 h-2 rounded-full bg-sky-300/40 left-[60%] top-[80%] particle" style={{ animationDelay: '3s', animationDuration: '9s' }} />
-        <div className="absolute w-1.5 h-1.5 rounded-full bg-white left-[50%] top-[15%] particle" style={{ animationDelay: '1.8s', animationDuration: '5s' }} />
-      </div>
+
+
 
       {/* ================= LEFT SIDE: Immersive Cosmic Branding (Hidden on mobile/tablet) ================= */}
       <div className="hidden lg:flex lg:col-span-5 relative flex-col justify-between p-12 overflow-hidden bg-transparent">
         
         {/* Header Branding */}
         <div className="flex items-center space-x-3 select-none z-10">
-          <motion.div 
-            animate={{ y: [0, -3, 0] }}
-            transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
+          <div 
             className="w-10 h-10 rounded-xl bg-gradient-to-tr from-violet-500 via-pink-500 to-orange-400 flex items-center justify-center shadow-md shadow-pink-300/30 cursor-pointer"
           >
             <MessageSquare className="w-5 h-5 text-white" />
-          </motion.div>
+          </div>
           <span className="text-xl font-bold tracking-tight text-slate-800">
             Bloop
           </span>
@@ -538,15 +525,13 @@ export default function Register() {
           <div className="absolute inset-[50px] border border-orange-400/15 rounded-full portal-ring pointer-events-none orbit-ccw" style={{ animationDelay: '2s' }} />
 
           {/* Central Massive Glowing Cosmic Portal Core */}
-          <motion.div
-            animate={{ scale: [1, 1.04, 1] }}
-            transition={{ repeat: Infinity, duration: 8, ease: "easeInOut" }}
+          <div
             className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-28 h-28 rounded-full bg-gradient-to-tr from-violet-500 via-pink-500 to-orange-400 shadow-[0_0_80px_rgba(219,39,119,0.35)] flex items-center justify-center border border-white/30"
           >
             <div className="w-20 h-20 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20">
-              <MessageSquare className="w-8 h-8 text-white animate-pulse" />
+              <MessageSquare className="w-8 h-8 text-white" />
             </div>
-          </motion.div>
+          </div>
 
           {/* Curved glowing connection lines (SVG) */}
           <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 340 340" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -556,8 +541,7 @@ export default function Register() {
           </svg>
 
           {/* Holographic Identity Card A (Top Left) */}
-          <motion.div
-            whileHover={{ y: -5 }}
+          <div
             className="absolute left-[60px] top-[70px] -translate-x-1/2 -translate-y-1/2 holo-id-card rounded-xl p-2.5 w-28 border border-white/70 select-none shadow-md"
           >
             <div className="flex items-center space-x-1.5 mb-1">
@@ -569,11 +553,10 @@ export default function Register() {
             </div>
             <div className="h-[1.5px] bg-slate-100/50 w-full my-1"></div>
             <p className="text-[6px] text-slate-400 font-mono truncate">NODE.0x88A</p>
-          </motion.div>
+          </div>
 
           {/* Holographic Identity Card B (Top Right) */}
-          <motion.div
-            whileHover={{ y: -5 }}
+          <div
             className="absolute left-[280px] top-[110px] -translate-x-1/2 -translate-y-1/2 holo-id-card rounded-xl p-2.5 w-28 border border-white/70 select-none shadow-md"
           >
             <div className="flex items-center space-x-1.5 mb-1">
@@ -585,11 +568,10 @@ export default function Register() {
             </div>
             <div className="h-[1.5px] bg-slate-100/50 w-full my-1"></div>
             <p className="text-[6px] text-slate-400 font-mono truncate">NODE.0x71F</p>
-          </motion.div>
+          </div>
 
           {/* Holographic Identity Card C (Bottom) */}
-          <motion.div
-            whileHover={{ y: -5 }}
+          <div
             className="absolute left-[190px] top-[270px] -translate-x-1/2 -translate-y-1/2 holo-id-card rounded-xl p-2.5 w-28 border border-white/70 select-none shadow-md"
           >
             <div className="flex items-center space-x-1.5 mb-1">
@@ -601,17 +583,13 @@ export default function Register() {
             </div>
             <div className="h-[1.5px] bg-slate-100/50 w-full my-1"></div>
             <p className="text-[6px] text-slate-400 font-mono truncate">NODE.0x99B</p>
-          </motion.div>
+          </div>
 
           {/* Translucent Crystals */}
-          <motion.div
-            animate={{ y: [0, -6, 0] }}
-            transition={{ repeat: Infinity, duration: 5, ease: "easeInOut" }}
+          <div
             className="absolute left-[20px] top-[180px] w-8 h-10 holographic-crystal"
           />
-          <motion.div
-            animate={{ y: [0, 8, 0] }}
-            transition={{ repeat: Infinity, duration: 6, ease: "easeInOut", delay: 1.5 }}
+          <div
             className="absolute left-[295px] top-[200px] w-7 h-9 holographic-crystal"
             style={{ transform: "rotate(35deg)" }}
           />
@@ -638,12 +616,7 @@ export default function Register() {
           
           <AnimatePresence mode="wait">
             {!isSuccess ? (
-              <motion.div
-                key="register-form-card"
-                initial={{ opacity: 0, y: 35, scale: 0.98 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -25, scale: 0.98 }}
-                transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+              <div
                  className="frosted-light-card w-full rounded-[32px] px-6 py-8 md:p-8 flex flex-col items-center justify-between min-h-[460px]"
               >
                 {/* Back Arrow Button (Visible only in Step 2) */}
@@ -1120,7 +1093,7 @@ export default function Register() {
                     <span>Continue with GitHub</span>
                   </motion.button>
                 </div>
-              </motion.div>
+              </div>
             ) : (
               // Success Screen
               <motion.div

@@ -7,19 +7,6 @@
   color: #0f172a;
 }
 
-/* Warm Dynamic Aurora Gradient Background Animation */
-@keyframes warmPastelAurora {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-}
-
 .seamless-cosmic-bg {
   background: radial-gradient(circle at 10% 20%, rgba(243, 232, 255, 0.45) 0%, transparent 45%),
               radial-gradient(circle at 90% 10%, rgba(254, 205, 211, 0.4) 0%, transparent 50%),
@@ -27,8 +14,6 @@
               radial-gradient(circle at 80% 80%, rgba(253, 186, 116, 0.3) 0%, transparent 50%),
               radial-gradient(circle at 20% 80%, rgba(217, 70, 239, 0.25) 0%, transparent 45%),
               #fbfbfc;
-  background-size: 200% 200%;
-  animation: warmPastelAurora 20s infinite ease-in-out;
 }
 
 /* Premium Glassmorphism Card with layered drop shadow and thin glass borders */
@@ -73,32 +58,9 @@
               inset 0 1px 0px rgba(255, 255, 255, 0.8);
 }
 
-/* Floating animation styles */
-@keyframes floatScale {
-  0%, 100% {
-    transform: translateY(0px) scale(1);
-  }
-  50% {
-    transform: translateY(-8px) scale(1.02);
-  }
-}
 
-.float-visual {
-  animation: floatScale 8s infinite ease-in-out;
-}
 
-/* Vibrant animated gradient button */
-@keyframes shimmerGradient {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-}
+
 
 .vibrant-gradient-btn {
   background: linear-gradient(
@@ -108,8 +70,6 @@
     #f97316 70%,  /* Peach/Orange */
     #38bdf8 100%  /* Sky Blue */
   );
-  background-size: 200% 200%;
-  animation: shimmerGradient 5s infinite ease-in-out;
   box-shadow: 0 4px 15px rgba(236, 72, 153, 0.25);
   transition: all 0.3s ease;
 }
@@ -118,48 +78,9 @@
   box-shadow: 0 8px 25px rgba(236, 72, 153, 0.4), 0 0 8px rgba(139, 92, 246, 0.3);
 }
 
-/* Orbit Animations */
-@keyframes rotateClockwise {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
 
-@keyframes rotateCounterClockwise {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(-360deg);
-  }
-}
 
-.orbit-cw {
-  animation: rotateClockwise 35s infinite linear;
-}
 
-.orbit-ccw {
-  animation: rotateCounterClockwise 45s infinite linear;
-}
-
-/* Portal Pulse Animation */
-@keyframes portalPulse {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 0.25;
-  }
-  50% {
-    transform: scale(1.05);
-    opacity: 0.5;
-  }
-}
-
-.portal-ring {
-  animation: portalPulse 4s infinite ease-in-out;
-}
 
 /* Holographic Identity Card */
 .holo-id-card {
@@ -173,24 +94,7 @@
   overflow: hidden;
 }
 
-.holo-id-card::after {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: linear-gradient(
-    115deg,
-    transparent 20%,
-    rgba(236, 72, 153, 0.05) 40%,
-    rgba(139, 92, 246, 0.05) 50%,
-    rgba(56, 189, 248, 0.05) 60%,
-    transparent 80%
-  );
-  animation: rotateClockwise 12s infinite linear;
-  pointer-events: none;
-}
+
 
 /* Crystal polygon style */
 .holographic-crystal {
@@ -201,33 +105,11 @@
   box-shadow: inset 0 0 12px rgba(255, 255, 255, 0.5), 0 8px 24px rgba(139, 92, 246, 0.08);
 }
 
-/* Path dashed stroke connection lines animation */
-@keyframes dashFlow {
-  to {
-    stroke-dashoffset: -20;
-  }
-}
-
 .dashed-line {
   stroke-dasharray: 6, 6;
-  animation: dashFlow 2s infinite linear;
 }
 
-/* Tiny particle animations */
-@keyframes particleFloat {
-  0%, 100% {
-    transform: translate(0, 0);
-    opacity: 0.2;
-  }
-  50% {
-    transform: translate(10px, -15px);
-    opacity: 0.7;
-  }
-}
 
-.particle {
-  animation: particleFloat 6s infinite ease-in-out;
-}
 
 /* Scrollbar styling */
 ::-webkit-scrollbar {

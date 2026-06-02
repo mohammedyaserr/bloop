@@ -161,19 +161,9 @@ export default function Login() {
   return (
     <div className="login-container seamless-cyan-bg relative min-h-screen w-full grid grid-cols-1 lg:grid-cols-12 overflow-x-hidden">
       
-      {/* Layer 1: Giant Full-Page Animated Glowing Orbs & Mesh */}
-      <div className="absolute top-[10%] left-[5%] w-[450px] h-[450px] rounded-full bg-cyan-300/20 blur-[120px] pointer-events-none -z-10 animate-float-1" />
-      <div className="absolute bottom-[10%] right-[5%] w-[420px] h-[420px] rounded-full bg-sky-200/25 blur-[130px] pointer-events-none -z-10 animate-float-2" />
-      <div className="absolute top-[30%] right-[30%] w-[380px] h-[380px] rounded-full bg-teal-200/15 blur-[110px] pointer-events-none -z-10 animate-float-3" />
-      <div className="absolute bottom-[25%] left-[25%] w-[300px] h-[300px] rounded-full bg-cyan-100/15 blur-[100px] pointer-events-none -z-10" />
 
-      {/* Ambient Sparks / Sparkles / Particles floating across the entire page */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">
-        <div className="absolute w-2 h-2 rounded-full bg-cyan-400/40 left-[12%] top-[20%] particle" style={{ animationDelay: '0.5s', animationDuration: '6s' }} />
-        <div className="absolute w-2.5 h-2.5 rounded-full bg-teal-400/30 left-[75%] top-[40%] particle" style={{ animationDelay: '2s', animationDuration: '8s' }} />
-        <div className="absolute w-2 h-2 rounded-full bg-sky-300/40 left-[25%] top-[75%] particle" style={{ animationDelay: '1.2s', animationDuration: '7s' }} />
-        <div className="absolute w-1.5 h-1.5 rounded-full bg-white left-[50%] top-[15%] particle" style={{ animationDelay: '1.8s', animationDuration: '5s' }} />
-      </div>
+
+
       
       {/* ================= LEFT SIDE: Immersive Branding & Mockup (Hidden on mobile/tablet) ================= */}
       <div className="hidden lg:flex lg:col-span-5 relative flex-col justify-between p-12 overflow-hidden bg-transparent">
@@ -306,14 +296,7 @@ export default function Login() {
           
           <AnimatePresence mode="wait">
             {!isSuccess ? (
-              <motion.div
-                key="login-form-card"
-                initial={{ opacity: 0, y: 35, scale: 0.98 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -25, scale: 0.98 }}
-                transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                className="frosted-light-card w-full rounded-[32px] px-6 py-8 md:p-8 flex flex-col items-center justify-between"
-              >
+              <div className="frosted-light-card w-full rounded-[32px] px-6 py-8 md:p-8 flex flex-col items-center justify-between">
                 {/* Header (visible on mobile only) */}
                 <div className="w-full flex flex-col items-center mb-6 text-center select-none lg:hidden">
                   <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-400 via-sky-400 to-teal-400 flex items-center justify-center shadow-md mb-2.5">
@@ -522,7 +505,7 @@ export default function Login() {
                     <span>Continue with GitHub</span>
                   </motion.button>
                 </div>
-              </motion.div>
+              </div>
             ) : (
               // Success Screen
               <motion.div
