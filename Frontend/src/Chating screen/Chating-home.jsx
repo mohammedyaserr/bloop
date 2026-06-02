@@ -40,7 +40,8 @@ import {
   Camera,
   Globe,
   Lock,
-  Shield
+  Shield,
+  Loader2
 } from 'lucide-react';
 import './Chating-home.css';
 
@@ -68,7 +69,7 @@ const emojiCategories = [
 const initialChats = [];
 
 // Encapsulated voice note player with seek progress tracking and HTML5 Audio integration
-const VoicePlayer = ({ src }) => {
+const VoicePlayer = ({ src, isOutgoing = true, sending = false }) => {
   const [isPlaying, setIsPlaying] = React.useState(false);
   const [currentTime, setCurrentTime] = React.useState(0);
   const [duration, setDuration] = React.useState(0);
@@ -133,9 +134,20 @@ const VoicePlayer = ({ src }) => {
       <button 
         type="button"
         onClick={togglePlay}
-        className="w-8.5 h-8.5 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white transition-colors cursor-pointer select-none shrink-0"
+        disabled={sending}
+        className={
+          isOutgoing
+            ? "w-8.5 h-8.5 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white transition-colors cursor-pointer select-none shrink-0"
+            : "w-8.5 h-8.5 rounded-full bg-indigo-100 hover:bg-indigo-200/80 flex items-center justify-center text-indigo-600 transition-colors cursor-pointer select-none shrink-0"
+        }
       >
-        {isPlaying ? <Pause className="w-4 h-4 fill-white text-white" /> : <Play className="w-4 h-4 fill-white text-white translate-x-[1px]" />}
+        {sending ? (
+          <Loader2 className={isOutgoing ? "w-4 h-4 text-white animate-spin" : "w-4 h-4 text-indigo-600 animate-spin"} />
+        ) : isPlaying ? (
+          <Pause className={isOutgoing ? "w-4 h-4 fill-white text-white" : "w-4 h-4 fill-indigo-600 text-indigo-600"} />
+        ) : (
+          <Play className={isOutgoing ? "w-4 h-4 fill-white text-white translate-x-[1px]" : "w-4 h-4 fill-indigo-600 text-indigo-600 translate-x-[1px]"} />
+        )}
       </button>
       <div className="flex-1 flex flex-col justify-center">
         <input 
@@ -144,9 +156,17 @@ const VoicePlayer = ({ src }) => {
           max={duration || 100}
           value={currentTime}
           onChange={handleSliderChange}
-          className="w-full accent-indigo-400 h-1 bg-white/30 rounded-lg appearance-none cursor-pointer"
+          className={
+            isOutgoing
+              ? "w-full accent-indigo-400 h-1 bg-white/30 rounded-lg appearance-none cursor-pointer"
+              : "w-full accent-indigo-600 h-1 bg-slate-200/80 rounded-lg appearance-none cursor-pointer"
+          }
         />
-        <div className="flex items-center justify-between text-[9px] text-white/80 mt-1 select-none font-bold font-mono">
+        <div className={
+          isOutgoing
+            ? "flex items-center justify-between text-[9px] text-white/80 mt-1 select-none font-bold font-mono"
+            : "flex items-center justify-between text-[9px] text-slate-500 mt-1 select-none font-bold font-mono"
+        }>
           <span>{formatAudioTime(currentTime)}</span>
           <span>{formatAudioTime(duration || 0)}</span>
         </div>
@@ -156,7 +176,7 @@ const VoicePlayer = ({ src }) => {
 };
 
 // Dynamic Preloading Image Component to prevent layout shifting/reflows
-const StableImageBubble = React.memo(({ src, alt, onPreviewImage }) => {
+const StableImageBubble = React.memo(({ src, alt, onPreviewImage, sending }) => {
   const [isLoaded, setIsLoaded] = React.useState(false);
 
   // Preload in background
@@ -184,6 +204,16 @@ const StableImageBubble = React.memo(({ src, alt, onPreviewImage }) => {
         }`}
         onClick={() => onPreviewImage(src)}
       />
+
+      {/* Uploading Spinner Overlay */}
+      {sending && (
+        <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] flex flex-col items-center justify-center z-20">
+          <div className="flex flex-col items-center space-y-2">
+            <Loader2 className="w-8 h-8 text-white animate-spin" />
+            <span className="text-[10px] text-white/95 font-bold tracking-wider uppercase select-none">Sending...</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 });
@@ -260,30 +290,55 @@ const MessageBubble = React.memo(({ msg, isYou, isConsecutive, group, activeChat
           <div 
             className={`py-2.5 px-4 text-[13.5px] leading-relaxed relative ${
               isYou ? 'msg-bubble-outgoing' : 'msg-bubble-incoming'
-            }`}
+            } ${msg.sending ? 'opacity-70' : ''}`}
           >
             {msg.text.startsWith('data:image/') ? (
-              <StableImageBubble src={msg.text} alt="Attachment" onPreviewImage={onPreviewImage} />
+              <StableImageBubble src={msg.text} alt="Attachment" onPreviewImage={onPreviewImage} sending={msg.sending} />
             ) : msg.text.startsWith('data:audio/') ? (
-              <VoicePlayer src={msg.text} />
+              <VoicePlayer src={msg.text} isOutgoing={isYou} sending={msg.sending} />
             ) : msg.text.startsWith('data:') ? (
               <div 
-                className="flex items-center space-x-3 py-1.5 px-2 bg-black/10 hover:bg-black/15 rounded-xl border border-white/20 min-w-[200px] max-w-[260px] cursor-pointer"
+                className={
+                  isYou
+                    ? "flex items-center space-x-3 py-1.5 px-2 bg-black/10 hover:bg-black/15 rounded-xl border border-white/20 min-w-[200px] max-w-[260px] cursor-pointer"
+                    : "flex items-center space-x-3 py-1.5 px-2 bg-slate-100 hover:bg-slate-200/80 rounded-xl border border-slate-200/60 min-w-[200px] max-w-[260px] cursor-pointer"
+                }
                 onClick={() => {
+                  if (msg.sending) return;
                   const link = document.createElement('a');
                   link.href = msg.text;
                   link.download = 'attachment';
                   link.click();
                 }}
               >
-                <div className="w-8.5 h-8.5 rounded-lg bg-indigo-500/20 flex items-center justify-center text-white shrink-0">
+                <div className={
+                  isYou
+                    ? "w-8.5 h-8.5 rounded-lg bg-indigo-500/20 flex items-center justify-center text-white shrink-0"
+                    : "w-8.5 h-8.5 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-600 shrink-0"
+                }>
                   <FileText className="w-4.5 h-4.5" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-[12px] font-bold text-white truncate leading-tight">File Attachment</p>
-                  <p className="text-[9.5px] text-white/70 font-semibold mt-0.5">Click to download</p>
+                  <p className={
+                    isYou
+                      ? "text-[12px] font-bold text-white truncate leading-tight"
+                      : "text-[12px] font-bold text-slate-800 truncate leading-tight"
+                  }>File Attachment</p>
+                  <p className={
+                    isYou
+                      ? "text-[9.5px] text-white/70 font-semibold mt-0.5"
+                      : "text-[9.5px] text-slate-500 font-semibold mt-0.5"
+                  }>Click to download</p>
                 </div>
-                <Download className="w-4 h-4 text-white/80 shrink-0" />
+                {msg.sending ? (
+                  <Loader2 className={isYou ? "w-4 h-4 text-white animate-spin shrink-0" : "w-4 h-4 text-indigo-600 animate-spin shrink-0"} />
+                ) : (
+                  <Download className={
+                    isYou
+                      ? "w-4 h-4 text-white/80 shrink-0"
+                      : "w-4 h-4 text-slate-500 shrink-0"
+                  } />
+                )}
               </div>
             ) : (
               <p className="font-medium">{msg.text}</p>
@@ -295,8 +350,20 @@ const MessageBubble = React.memo(({ msg, isYou, isConsecutive, group, activeChat
                 {msg.timestamp}
               </span>
               {isYou && (
-                <span className="text-white/90">
-                  <CheckCheck className="w-3 h-3" />
+                <span className="text-white/90 flex items-center">
+                  {msg.sending ? (
+                    <Loader2 className="w-3 h-3 animate-spin text-white/70" />
+                  ) : msg.error ? (
+                    <span className="text-rose-400 font-extrabold text-[10px] select-none ml-0.5" title="Failed to send">⚠️</span>
+                  ) : (
+                    <>
+                      {group || activeChat?.online ? (
+                        <CheckCheck className="w-3 h-3" />
+                      ) : (
+                        <Check className="w-3 h-3" />
+                      )}
+                    </>
+                  )}
                 </span>
               )}
             </div>
@@ -311,9 +378,12 @@ const MessageBubble = React.memo(({ msg, isYou, isConsecutive, group, activeChat
   return prevProps.msg.id === nextProps.msg.id &&
          prevProps.msg.text === nextProps.msg.text &&
          prevProps.msg.sender === nextProps.msg.sender &&
+         prevProps.msg.sending === nextProps.msg.sending &&
+         prevProps.msg.error === nextProps.msg.error &&
          prevProps.isYou === nextProps.isYou &&
          prevProps.isConsecutive === nextProps.isConsecutive &&
-         prevProps.group === nextProps.group;
+         prevProps.group === nextProps.group &&
+         prevProps.activeChat?.online === nextProps.activeChat?.online;
 });
 
 export default function ChatingHome() {
@@ -999,12 +1069,12 @@ export default function ChatingHome() {
     };
   }, []);
 
-  // Auto-scroll to bottom of chats on new message
+  // Auto-scroll to bottom of chats on new message or chat change
   useEffect(() => {
     if (activeChat) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [activeChat?.messages, isTyping]);
+  }, [activeChatId, activeChat?.messages?.length]);
 
   // Handle input message change with debounced Socket.IO typing indicators
   const handleInputChange = (e) => {
@@ -1178,6 +1248,48 @@ export default function ChatingHome() {
     const senderId = getCurrentUserId();
     const conversationId = activeChatId;
 
+    const isMedia = contentString.startsWith('data:');
+    const tempId = 'temp_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+
+    const optimisticMessage = {
+      id: tempId,
+      text: contentString,
+      sender: 'you',
+      senderId: senderId,
+      senderName: currentUser.fullName,
+      senderAvatar: currentUser.avatar,
+      senderAvatarColor: currentUser.avatarColor,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      sending: true
+    };
+
+    // Pre-emptively reset the chat bar immediately
+    if (isMedia) {
+      setSelectedFile(null);
+    }
+    setInputMessage('');
+    setShowEmojiPicker(false);
+
+    // Immediately display in chat UI
+    setChats(prevChats =>
+      prevChats.map(chat => {
+        if (chat.id === activeChatId) {
+          let displayMsg = contentString;
+          if (contentString.startsWith('data:image/')) displayMsg = '📷 Photo';
+          else if (contentString.startsWith('data:audio/')) displayMsg = '🎵 Voice note';
+          else if (contentString.startsWith('data:')) displayMsg = '📁 Attachment';
+
+          return {
+            ...chat,
+            lastMessage: displayMsg,
+            timestamp: optimisticMessage.timestamp,
+            messages: [...chat.messages, optimisticMessage]
+          };
+        }
+        return chat;
+      })
+    );
+
     axios.post(`${import.meta.env.VITE_API_URL || 'https://bloop-af6u.onrender.com'}/api/auth/messages`, {
       senderId,
       conversationId,
@@ -1206,34 +1318,43 @@ export default function ChatingHome() {
           senderName: msg.senderName || currentUser.fullName,
           senderAvatar: msg.senderAvatar || currentUser.avatar,
           senderAvatarColor: msg.senderAvatarColor || currentUser.avatarColor,
-          timestamp: new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          timestamp: new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          sending: false
         };
 
         setChats(prevChats =>
           prevChats.map(chat => {
             if (chat.id === activeChatId) {
-              let displayMsg = contentString;
-              if (contentString.startsWith('data:image/')) displayMsg = '📷 Photo';
-              else if (contentString.startsWith('data:audio/')) displayMsg = '🎵 Voice note';
-              else if (contentString.startsWith('data:')) displayMsg = '📁 Attachment';
-
+              const updatedMessages = chat.messages.map(m => 
+                m.id === tempId ? newMessage : m
+              );
               return {
                 ...chat,
-                lastMessage: displayMsg,
-                timestamp: newMessage.timestamp,
-                messages: [...chat.messages, newMessage]
+                messages: updatedMessages
               };
             }
             return chat;
           })
         );
-        setInputMessage('');
-        setSelectedFile(null);
-        setShowEmojiPicker(false);
       }
     })
     .catch(err => {
       console.error("❌ Failed to send payload message:", err);
+      // Mark as error
+      setChats(prevChats =>
+        prevChats.map(chat => {
+          if (chat.id === activeChatId) {
+            const updatedMessages = chat.messages.map(m => 
+              m.id === tempId ? { ...m, sending: false, error: true } : m
+            );
+            return {
+              ...chat,
+              messages: updatedMessages
+            };
+          }
+          return chat;
+        })
+      );
     });
   };
 
