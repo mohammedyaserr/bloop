@@ -206,7 +206,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Calling States
   const [isCallActive, setIsCallActive] = useState(false);
-  const [callDirection, setCallDirection] = useState<'incoming' | 'outgoing' | null>(null);
+  const [callDirection, setCallDirectionState] = useState<'incoming' | 'outgoing' | null>(null);
   const [callState, setCallState] = useState<CallState>('idle');
   const [remoteUser, setRemoteUser] = useState<CallUser | null>(null);
 
@@ -233,6 +233,29 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
   const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
   const [peerConn, setPeerConn] = useState<RTCPeerConnection | null>(null);
+
+  // Component state and callback references to prevent reconnect loops
+  const callDirectionRef = useRef<'incoming' | 'outgoing' | null>(null);
+  const initializePeerConnectionRef = useRef<any>(null);
+  const resetCallRef = useRef<any>(null);
+  const acquireMediaRef = useRef<any>(null);
+  const currentUserRef = useRef<any>(null);
+  const endCallRef = useRef<any>(null);
+
+  const setCallDirection = useCallback((dir: 'incoming' | 'outgoing' | null) => {
+    setCallDirectionState(dir);
+    callDirectionRef.current = dir;
+  }, []);
+
+  // Sync latest state and callbacks to refs
+  useEffect(() => {
+    initializePeerConnectionRef.current = initializePeerConnection;
+    resetCallRef.current = resetCall;
+    acquireMediaRef.current = acquireMedia;
+    currentUserRef.current = currentUser;
+    endCallRef.current = endCall;
+  });
+
 
   // Initialize ToneGenerator on client-side
   if (!toneGen.current && typeof window !== 'undefined') {
@@ -293,10 +316,10 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       stream.getAudioTracks().forEach(track => {
         track.enabled = !isMutedRef.current;
       });
-      console.log('🎙️ [Call] Microphone access acquired successfully');
+      console.log("MICROPHONE ACQUIRED", stream);
       return stream;
     } catch (err) {
-      console.warn('⚠️ [Call] Failed to acquire microphone stream:', err);
+      console.error("MICROPHONE FAILED", err);
       return null;
     }
   };
@@ -340,11 +363,19 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const endCall = useCallback(() => {
     if (!currentUser || !socketRef.current || !remoteUserRef.current) return;
-    console.log('⏹️ Ending active call');
+    
+    const isOutgoing = callDirectionRef.current === 'outgoing';
+    const sId = isOutgoing ? currentUser.id : remoteUserRef.current.id;
+    const rId = isOutgoing ? remoteUserRef.current.id : currentUser.id;
+
+    console.log(`[CallEvent] call:ended (emit) | Sender: ${sId} | Receiver: ${rId} | Timestamp: ${new Date().toISOString()} | Payload:`, {
+      senderId: sId,
+      receiverId: rId
+    });
 
     socketRef.current.emit('call:ended', {
-      senderId: callDirection === 'outgoing' ? currentUser.id : remoteUserRef.current.id,
-      receiverId: callDirection === 'outgoing' ? remoteUserRef.current.id : currentUser.id
+      senderId: sId,
+      receiverId: rId
     });
 
     if (toneGen.current) toneGen.current.playDisconnectBeep();
@@ -353,11 +384,15 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setTimeout(() => {
       resetCall();
     }, 2000);
-  }, [currentUser, callDirection, resetCall]);
+  }, [currentUser, resetCall]);
 
   const rejectCall = useCallback(() => {
     if (!currentUser || !socketRef.current || !remoteUserRef.current) return;
-    console.log('❌ Rejecting incoming call');
+
+    console.log("CALL REJECTED EMITTED", {
+      senderId: remoteUserRef.current.id,
+      receiverId: currentUser.id
+    });
 
     socketRef.current.emit('call:rejected', {
       senderId: remoteUserRef.current.id,
@@ -369,7 +404,11 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const acceptCall = useCallback(async () => {
     if (!currentUser || !socketRef.current || !remoteUserRef.current) return;
-    console.log('✅ Accepting incoming call');
+
+    console.log("CALL ACCEPTED EMITTED", {
+      senderId: remoteUserRef.current.id,
+      receiverId: currentUser.id
+    });
 
     if (toneGen.current) toneGen.current.playConnectBeep();
     updateCallState('connecting');
@@ -398,13 +437,21 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     peerConnectionRef.current = pc;
     setPeerConn(pc);
 
+    console.log("RTCPeerConnection created");
+
+    // Log ICE gathering state
+    pc.onicegatheringstatechange = () => {
+      console.log("ICE Gathering State changed:", pc.iceGatheringState);
+    };
+
     // Send local ICE candidates to peer
     pc.onicecandidate = (event) => {
-      if (event.candidate && socketRef.current && currentUser) {
-        console.log('📡 [WebRTC] Sending ICE Candidate to user:', targetUserId);
+      const currentUserId = currentUserRef.current?.id;
+      if (event.candidate && socketRef.current && currentUserId) {
+        console.log("ICE SENT", event.candidate);
         socketRef.current.emit('ice-candidate', {
           candidate: event.candidate,
-          senderId: currentUser.id,
+          senderId: currentUserId,
           receiverId: targetUserId
         });
       }
@@ -419,21 +466,27 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
         console.warn('⚠️ [WebRTC] Peer connection disconnected or failed');
         setEndedStatusText('Connection Lost');
-        endCall();
+        if (endCallRef.current) {
+          endCallRef.current();
+        } else {
+          endCall();
+        }
       }
     };
 
     // Play remote audio track when received
     pc.ontrack = (event) => {
-      console.log('🔊 [WebRTC] Remote stream track arrived!', event.streams[0]);
+      console.log("ontrack fires with streams:", event.streams);
       if (!remoteAudioRef.current && typeof window !== 'undefined') {
         const audio = document.createElement('audio');
         audio.autoplay = true;
         audio.style.display = 'none';
         document.body.appendChild(audio);
         remoteAudioRef.current = audio;
+        console.log("audio autoplay configuration applied");
       }
       if (remoteAudioRef.current) {
+        console.log("remote audio element receives stream", event.streams[0]);
         remoteAudioRef.current.srcObject = event.streams[0];
       }
     };
@@ -447,11 +500,12 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     return pc;
-  }, [currentUser, endCall]);
+  }, []);
 
   // 2. Initialize calling socket when user is logged in
   useEffect(() => {
-    if (!currentUser) {
+    const userId = currentUser?.id;
+    if (!userId) {
       if (socket) {
         socket.disconnect();
         setSocket(null);
@@ -460,7 +514,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
 
-    const socketUrl = import.meta.env.VITE_API_URL || 'https://bloop-af6u.onrender.com';
+    const socketUrl = (import.meta as any).env.VITE_API_URL || 'https://bloop-af6u.onrender.com';
     const socketInstance = io(socketUrl, {
       transports: ['websocket', 'polling']
     });
@@ -468,19 +522,24 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     socketRef.current = socketInstance;
 
     socketInstance.on('connect', () => {
-      console.log(`🔌 [CallSocket] Connected. Joining user_${currentUser.id}`);
-      socketInstance.emit('join-user-room', currentUser.id);
+      console.log("Socket Connected", socketInstance.id);
+      console.log("Current User", currentUser);
+      console.log("Current User Ref", currentUserRef.current);
+      console.log(`🔌 [CallSocket] Connected successfully. Joining room user_${userId}. socket.connected = ${socketInstance.connected}`);
+      socketInstance.emit('join-user-room', userId);
     });
 
     // Handle Incoming Call Event
     socketInstance.on('incoming-call', (data: any) => {
-      console.log('📞 [CallSocket] incoming-call event received', data);
+      console.log("INCOMING CALL RECEIVED", data);
       
+      const currentUserId = currentUserRef.current?.id;
       // If we are already in an active session, automatically decline (busy)
       if (isCallActiveRef.current || callStateRef.current !== 'idle') {
+        console.log("CALL REJECTED EMITTED", { senderId: data.senderId, receiverId: currentUserId });
         socketInstance.emit('call:rejected', {
           senderId: data.senderId,
-          receiverId: currentUser.id
+          receiverId: currentUserId
         });
         return;
       }
@@ -504,65 +563,78 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Emit call:ringing back to caller
       socketInstance.emit('call:ringing', {
         senderId: data.senderId,
-        receiverId: currentUser.id
+        receiverId: currentUserId
       });
     });
 
     // Handle Call Ringing Event (Caller side)
     socketInstance.on('call:ringing', (data: any) => {
-      console.log('📞 [CallSocket] call:ringing event received');
+      const currentUserId = currentUserRef.current?.id;
+      console.log(`[CallEvent] call:ringing (receive) | Sender: ${data.senderId} | Receiver: ${currentUserId} | Timestamp: ${new Date().toISOString()} | Payload:`, data);
       setOutgoingStatus('ringing');
       if (toneGen.current) toneGen.current.playRingTone();
     });
 
     // Handle Call Accepted Event (Caller side)
     socketInstance.on('call:accepted', async (data: any) => {
-      console.log('📞 [CallSocket] call:accepted event received. Handshaking WebRTC...');
+      console.log("CALL ACCEPTED RECEIVED", data);
       if (toneGen.current) toneGen.current.playConnectBeep();
       
       updateCallState('connecting');
       setOutgoingStatus('connecting');
 
       // Caller starts WebRTC session by acquiring media & creating connection
-      const stream = await acquireMedia();
-      const pc = await initializePeerConnection(remoteUserRef.current?.id || data.senderId, stream);
+      const stream = await acquireMediaRef.current();
+      const targetId = remoteUserRef.current?.id || data.senderId;
+      const pc = await initializePeerConnectionRef.current(targetId, stream);
       
       // Create offer and send to receiver
       const offer = await pc.createOffer({ offerToReceiveAudio: true });
       await pc.setLocalDescription(offer);
       
-      console.log('📡 [WebRTC] Offer created. Sending webrtc-offer...');
+      console.log("WEBRTC OFFER CREATED", offer);
+      
+      const currentUserId = currentUserRef.current?.id;
       socketInstance.emit('webrtc-offer', {
         sdp: offer,
-        senderId: currentUser.id,
-        receiverId: remoteUserRef.current?.id || data.senderId
+        senderId: currentUserId,
+        receiverId: targetId
       });
     });
 
     // Handle WebRTC Offer (Receiver side)
     socketInstance.on('webrtc-offer', async (data: any) => {
-      console.log('📡 [CallSocket] webrtc-offer received. Creating answer...');
+      const currentUserId = currentUserRef.current?.id;
+      console.log("WEBRTC OFFER RECEIVED", data);
+      
       let pc = peerConnectionRef.current;
       if (!pc) {
-        const stream = localStreamRef.current || await acquireMedia();
-        pc = await initializePeerConnection(data.senderId, stream);
+        const stream = localStreamRef.current || await acquireMediaRef.current();
+        pc = await initializePeerConnectionRef.current(data.senderId, stream);
+      }
+
+      if (!pc) {
+        console.error("❌ peerConnection is null. Cannot set remote description.");
+        return;
       }
 
       await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
 
-      console.log('📡 [WebRTC] Answer created. Sending webrtc-answer...');
+      console.log("WEBRTC ANSWER CREATED", answer);
+      
       socketInstance.emit('webrtc-answer', {
         sdp: answer,
-        senderId: currentUser.id,
+        senderId: currentUserId,
         receiverId: data.senderId
       });
     });
 
     // Handle WebRTC Answer (Caller side)
     socketInstance.on('webrtc-answer', async (data: any) => {
-      console.log('📡 [CallSocket] webrtc-answer received. Setting remote description...');
+      console.log("WEBRTC ANSWER RECEIVED", data);
+      
       const pc = peerConnectionRef.current;
       if (pc) {
         await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
@@ -571,6 +643,8 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Handle ICE candidates
     socketInstance.on('ice-candidate', async (data: any) => {
+      console.log("ICE RECEIVED", data.candidate);
+      
       const pc = peerConnectionRef.current;
       if (pc && data.candidate) {
         try {
@@ -583,44 +657,50 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Handle Call Rejected Event (Caller side)
     socketInstance.on('call:rejected', (data: any) => {
-      console.log('📞 [CallSocket] call:rejected event received');
+      console.log("CALL REJECTED RECEIVED", data);
+      
       if (toneGen.current) toneGen.current.playDisconnectBeep();
       setEndedStatusText('Call Rejected');
       updateCallState('ended');
       setTimeout(() => {
-        resetCall();
+        resetCallRef.current();
       }, 2000);
     });
 
     // Handle Call Ended Event (Both sides)
     socketInstance.on('call:ended', (data: any) => {
-      console.log('📞 [CallSocket] call:ended event received');
+      const currentUserId = currentUserRef.current?.id;
+      console.log(`[CallEvent] call:ended (receive) | Sender: ${data.senderId} | Receiver: ${currentUserId} | Timestamp: ${new Date().toISOString()} | Payload:`, data);
+      
       if (toneGen.current) toneGen.current.playDisconnectBeep();
       setEndedStatusText(data.statusText || 'Call Ended');
       updateCallState('ended');
       setTimeout(() => {
-        resetCall();
+        resetCallRef.current();
       }, 2000);
     });
 
     // Handle Call Missed / No Answer Event (Caller side)
     socketInstance.on('call:missed', (data: any) => {
-      console.log('📞 [CallSocket] call:missed event received');
+      const currentUserId = currentUserRef.current?.id;
+      console.log(`[CallEvent] call:missed (receive) | Sender: ${data.senderId} | Receiver: ${currentUserId} | Timestamp: ${new Date().toISOString()} | Payload:`, data);
+      
       if (toneGen.current) toneGen.current.playDisconnectBeep();
       setEndedStatusText('No Answer');
       updateCallState('ended');
       setTimeout(() => {
-        resetCall();
+        resetCallRef.current();
       }, 2000);
     });
 
     setSocket(socketInstance);
 
     return () => {
+      console.log('🔌 [CallSocket] Disconnecting socket instance...');
       socketInstance.disconnect();
       socketRef.current = null;
     };
-  }, [currentUser, initializePeerConnection, resetCall]);
+  }, [currentUser?.id]);
 
   // 3. Monitor Call Duration Timer
   useEffect(() => {
@@ -687,7 +767,15 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
 
-    console.log(`📞 Starting outgoing call to ${targetUser.name} (ID: ${targetUser.id})`);
+    const payload = {
+      senderId: currentUser.id,
+      receiverId: targetUser.id,
+      callerName: currentUser.fullName || currentUser.username,
+      callerAvatar: currentUser.avatar || null
+    };
+
+    console.log(`[CallEvent] call:start (emit) | Sender: ${currentUser.id} | Receiver: ${targetUser.id} | Timestamp: ${new Date().toISOString()} | Payload:`, payload);
+
     setRemoteUser(targetUser);
     remoteUserRef.current = targetUser;
     
@@ -698,12 +786,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     if (toneGen.current) toneGen.current.playDialTone();
 
-    socketRef.current.emit('call:start', {
-      senderId: currentUser.id,
-      receiverId: targetUser.id,
-      callerName: currentUser.fullName || currentUser.username,
-      callerAvatar: currentUser.avatar || null
-    });
+    socketRef.current.emit('call:start', payload);
   };
 
   const toggleMute = () => {

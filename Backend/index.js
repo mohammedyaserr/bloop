@@ -384,30 +384,31 @@ io.on("connection", (socket) => {
   // User A starts call -> Relayed to User B
   socket.on("call:start", (data) => {
     const { senderId, receiverId, callerName, callerAvatar } = data;
-    console.log(`📞 Socket Call Start: from user ${senderId} to user ${receiverId}`);
+    console.log("CALL START RECEIVED", data);
     activeCalls.set(Number(senderId), Number(receiverId));
     activeCalls.set(Number(receiverId), Number(senderId));
+    console.log("INCOMING CALL FORWARDED", receiverId);
     io.to(`user_${receiverId}`).emit("incoming-call", data);
   });
 
   // User B's device is ringing -> Relayed to User A
   socket.on("call:ringing", (data) => {
     const { senderId, receiverId } = data;
-    console.log(`📞 Socket Call Ringing: user ${receiverId} is ringing (caller is ${senderId})`);
+    console.log(`[CallEvent Server] call:ringing | Sender: ${senderId} | Receiver: ${receiverId} | Timestamp: ${new Date().toISOString()} | Payload:`, data);
     io.to(`user_${senderId}`).emit("call:ringing", data);
   });
 
   // User B accepts call -> Relayed to User A
   socket.on("call:accepted", (data) => {
     const { senderId, receiverId } = data;
-    console.log(`📞 Socket Call Accepted: by user ${receiverId} (caller is ${senderId})`);
+    console.log("CALL ACCEPTED RECEIVED", data);
     io.to(`user_${senderId}`).emit("call:accepted", data);
   });
 
   // User B rejects call -> Relayed to User A
   socket.on("call:rejected", (data) => {
     const { senderId, receiverId } = data;
-    console.log(`📞 Socket Call Rejected: by user ${receiverId} (caller is ${senderId})`);
+    console.log("CALL REJECTED RECEIVED", data);
     activeCalls.delete(Number(senderId));
     activeCalls.delete(Number(receiverId));
     io.to(`user_${senderId}`).emit("call:rejected", data);
@@ -416,7 +417,7 @@ io.on("connection", (socket) => {
   // Either user ends call -> Relayed to both users
   socket.on("call:ended", (data) => {
     const { senderId, receiverId } = data;
-    console.log(`📞 Socket Call Ended: session between ${senderId} and ${receiverId}`);
+    console.log(`[CallEvent Server] call:ended | Sender: ${senderId} | Receiver: ${receiverId} | Timestamp: ${new Date().toISOString()} | Payload:`, data);
     activeCalls.delete(Number(senderId));
     activeCalls.delete(Number(receiverId));
     io.to(`user_${senderId}`).emit("call:ended", data);
@@ -426,7 +427,7 @@ io.on("connection", (socket) => {
   // Call missed (no answer timeout) -> Relayed to User A
   socket.on("call:missed", (data) => {
     const { senderId, receiverId } = data;
-    console.log(`📞 Socket Call Missed: no answer from ${receiverId} to ${senderId}`);
+    console.log(`[CallEvent Server] call:missed | Sender: ${senderId} | Receiver: ${receiverId} | Timestamp: ${new Date().toISOString()} | Payload:`, data);
     activeCalls.delete(Number(senderId));
     activeCalls.delete(Number(receiverId));
     io.to(`user_${senderId}`).emit("call:missed", data);
@@ -434,21 +435,22 @@ io.on("connection", (socket) => {
 
   // WebRTC Offer relay
   socket.on("webrtc-offer", (data) => {
-    const { receiverId } = data;
-    console.log(`📡 Relaying webrtc-offer from ${data.senderId} to ${receiverId}`);
+    const { senderId, receiverId } = data;
+    console.log(`[CallEvent Server] webrtc-offer | Sender: ${senderId} | Receiver: ${receiverId} | Timestamp: ${new Date().toISOString()} | SDP type: ${data.sdp?.type}`);
     io.to(`user_${receiverId}`).emit("webrtc-offer", data);
   });
 
   // WebRTC Answer relay
   socket.on("webrtc-answer", (data) => {
-    const { receiverId } = data;
-    console.log(`📡 Relaying webrtc-answer from ${data.senderId} to ${receiverId}`);
+    const { senderId, receiverId } = data;
+    console.log(`[CallEvent Server] webrtc-answer | Sender: ${senderId} | Receiver: ${receiverId} | Timestamp: ${new Date().toISOString()} | SDP type: ${data.sdp?.type}`);
     io.to(`user_${receiverId}`).emit("webrtc-answer", data);
   });
 
   // WebRTC ICE Candidate relay
   socket.on("ice-candidate", (data) => {
-    const { receiverId } = data;
+    const { senderId, receiverId } = data;
+    console.log(`[CallEvent Server] ice-candidate | Sender: ${senderId} | Receiver: ${receiverId} | Timestamp: ${new Date().toISOString()} | Candidate:`, data.candidate?.candidate);
     io.to(`user_${receiverId}`).emit("ice-candidate", data);
   });
 
@@ -460,6 +462,7 @@ io.on("connection", (socket) => {
       const peerId = activeCalls.get(Number(userId));
       if (peerId) {
         console.log(`🔌 Call participant ${userId} disconnected. Notifying ${peerId}`);
+        console.log(`[CallEvent Server] call:ended (disconnect auto) | Sender: ${userId} | Receiver: ${peerId} | Timestamp: ${new Date().toISOString()}`);
         io.to(`user_${peerId}`).emit("call:ended", {
           senderId: userId,
           receiverId: peerId,
