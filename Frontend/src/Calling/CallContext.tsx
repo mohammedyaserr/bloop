@@ -201,7 +201,14 @@ export interface CallContextType {
 const CallContext = createContext<CallContextType | undefined>(undefined);
 
 export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<any>(() => {
+    try {
+      const userStr = localStorage.getItem('bloop_user');
+      return userStr ? JSON.parse(userStr) : null;
+    } catch {
+      return null;
+    }
+  });
   const [socket, setSocket] = useState<any>(null);
 
   // Calling States
@@ -289,7 +296,9 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const checkUser = () => {
       const user = getLoggedInUser();
-      if (user?.id !== currentUser?.id) {
+      if (!user && currentUser) {
+        setCurrentUser(null);
+      } else if (user && (!currentUser || user.id !== currentUser.id)) {
         setCurrentUser(user);
       }
     };
@@ -347,6 +356,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Action helper definitions (defined early to prevent hoisting reference warnings)
   const resetCall = useCallback(() => {
+    console.log("RESET CALL");
     updateIsCallActive(false);
     setCallDirection(null);
     updateCallState('idle');
@@ -362,6 +372,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [releaseMediaAndWebRTC]);
 
   const endCall = useCallback(() => {
+    console.log("END CALL");
     if (!currentUser || !socketRef.current || !remoteUserRef.current) return;
     
     const isOutgoing = callDirectionRef.current === 'outgoing';
@@ -532,10 +543,12 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Handle Incoming Call Event
     socketInstance.on('incoming-call', (data: any) => {
       console.log("INCOMING CALL RECEIVED", data);
+      console.log("CALL STATE", callStateRef.current);
       
       const currentUserId = currentUserRef.current?.id;
       // If we are already in an active session, automatically decline (busy)
       if (isCallActiveRef.current || callStateRef.current !== 'idle') {
+        console.log("AUTO REJECT");
         console.log("CALL REJECTED EMITTED", { senderId: data.senderId, receiverId: currentUserId });
         socketInstance.emit('call:rejected', {
           senderId: data.senderId,
@@ -696,6 +709,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setSocket(socketInstance);
 
     return () => {
+      console.log("SOCKET DISCONNECT");
       console.log('🔌 [CallSocket] Disconnecting socket instance...');
       socketInstance.disconnect();
       socketRef.current = null;
@@ -731,7 +745,14 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
             resetCall();
           }, 2000);
         } else if (callState === 'incoming') {
-          // Auto close for receiver side
+          // If User B times out, notify User A
+          if (socketRef.current && remoteUserRef.current && currentUser) {
+            console.log('⏰ Call timed out on receiver side. Emitting call:missed to caller');
+            socketRef.current.emit('call:missed', {
+              senderId: remoteUserRef.current.id,
+              receiverId: currentUser.id
+            });
+          }
           resetCall();
         }
       }, 30000); // 30 seconds answer window
