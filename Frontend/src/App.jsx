@@ -27,9 +27,12 @@ function App() {
 
   const isCallPath = window.location.pathname === '/call';
 
+  // Temporarily bypass the mobile download screen check to allow standard web views on mobile devices
+  /*
   if (isMobile && !isCallPath) {
     return <DownloadPage />;
   }
+  */
 
   return (
     <Router>
