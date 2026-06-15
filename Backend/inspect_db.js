@@ -2,7 +2,7 @@ import mysql from 'mysql2';
 import fs from 'fs';
 import dotenv from 'dotenv';
 
-dotenv.config();
+dotenv.config({ override: true });
 
 console.log("🔌 Connecting to MySQL database...");
 const db = mysql.createConnection({
@@ -10,7 +10,10 @@ const db = mysql.createConnection({
   port: process.env.DB_PORT || 3306,
   user: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_DATABASE || 'bloop'
+  database: process.env.DB_DATABASE || 'bloop',
+  ssl: {
+    rejectUnauthorized: false
+  }
 });
 
 db.query("DESCRIBE users", (err, result) => {

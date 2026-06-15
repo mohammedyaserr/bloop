@@ -205,8 +205,16 @@ export const googleRegisterUser = (req, res) => {
 };
 
 export const getUsers = (req, res) => {
-  const query = "SELECT id, fullName, username, email, isOnline, avatar, avatarColor FROM users";
-  db.query(query, (err, results) => {
+  const { search } = req.query;
+  let query = "SELECT id, fullName, username, email, isOnline, lastSeen, avatar, avatarColor, phone FROM users";
+  const params = [];
+
+  if (search) {
+    query += " WHERE username LIKE ? OR fullName LIKE ?";
+    params.push(`%${search}%`, `%${search}%`);
+  }
+
+  db.query(query, params, (err, results) => {
     if (err) {
       console.error("❌ Database query error:", err);
       return res.status(500).json({ success: false, message: "Internal server error." });
@@ -304,7 +312,7 @@ export const logoutUser = (req, res) => {
     return res.status(400).json({ success: false, message: "userId is required." });
   }
 
-  const query = "UPDATE users SET isOnline = 0 WHERE id = ?";
+  const query = "UPDATE users SET isOnline = 0, lastSeen = CURRENT_TIMESTAMP WHERE id = ?";
 
   db.query(query, [userId], (err) => {
     if (err) {
@@ -377,11 +385,13 @@ export const getConversations = (req, res) => {
       u.username,
       u.email,
       u.isOnline,
+      u.lastSeen,
       u.avatar,
       u.avatarColor,
       m.text AS lastMessage,
       m.createdAt AS lastMessageTime,
       m.senderId AS lastMessageSenderId,
+      m.is_read AS lastMessageIsRead,
       u2.fullName AS lastMessageSenderName,
       (SELECT COUNT(*) FROM messages WHERE messages.conversationId = c.id AND messages.senderId != ? AND messages.is_read = 0) AS unreadCount
     FROM conversations c
@@ -417,6 +427,7 @@ export const getConversations = (req, res) => {
         m.text AS lastMessage,
         m.createdAt AS lastMessageTime,
         m.senderId AS lastMessageSenderId,
+        NULL AS lastMessageIsRead,
         u2.fullName AS lastMessageSenderName,
         (
           SELECT COUNT(*) FROM group_messages gm2
@@ -512,7 +523,7 @@ export const getMessages = (req, res) => {
     });
   } else {
     const query = `
-      SELECT id, conversationId, senderId, text, createdAt 
+      SELECT id, conversationId, senderId, text, createdAt, is_read 
       FROM messages 
       WHERE conversationId = ?
       ORDER BY createdAt ASC
@@ -632,7 +643,7 @@ export const getProfile = (req, res) => {
     return res.status(400).json({ success: false, message: "userId parameter is required." });
   }
   
-  const query = "SELECT id, fullName, username, email, isOnline, bio, phone, location, website, avatar, avatarColor, statusMessage, joinedAt FROM users WHERE id = ?";
+  const query = "SELECT id, fullName, username, email, isOnline, lastSeen, bio, phone, location, website, avatar, avatarColor, statusMessage, joinedAt FROM users WHERE id = ?";
   
   db.query(query, [userId], (err, results) => {
     if (err) {
@@ -1086,7 +1097,8 @@ export const getGroupInfo = (req, res) => {
         u.email, 
         u.avatar, 
         u.avatarColor,
-        u.isOnline
+        u.isOnline,
+        u.lastSeen
       FROM group_members gm
       INNER JOIN users u ON gm.user_id = u.id
       WHERE gm.group_id = ?

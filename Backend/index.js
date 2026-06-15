@@ -1,7 +1,10 @@
 import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
+import path from 'path'
+import { fileURLToPath } from 'url'
 import authRoutes from './routes/authRoutes.js'
+import usersRoutes from './routes/usersRoutes.js'
 import { db } from './config/db.js'
 import { createServer } from 'http'
 import { Server } from 'socket.io'
@@ -12,6 +15,19 @@ const initTables = () => {
   db.query("DROP TABLE IF EXISTS messages", (dropErr) => {
     if (dropErr) {
       console.warn("⚠️ Warning when dropping old messages table:", dropErr.message);
+      
+      const isConnectionError = dropErr.fatal || 
+                                dropErr.code === 'ENOTFOUND' || 
+                                dropErr.code === 'ECONNREFUSED' || 
+                                dropErr.code === 'PROTOCOL_CONNECTION_LOST' ||
+                                dropErr.message.includes('closed state') ||
+                                dropErr.message.includes('getaddrinfo');
+      
+      if (isConnectionError) {
+        console.error("⏳ Database connection failed. Retrying table initialization in 5 seconds...");
+        setTimeout(initTables, 5000);
+        return;
+      }
     }
 
     const createSearchHistoryTable = `
@@ -55,7 +71,8 @@ const initTables = () => {
         id INT AUTO_INCREMENT PRIMARY KEY,
         conversationId INT NOT NULL,
         senderId INT NOT NULL,
-        text TEXT NOT NULL,
+        text LONGTEXT NOT NULL,
+        is_read TINYINT(1) DEFAULT 0,
         createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (conversationId) REFERENCES conversations(id) ON DELETE CASCADE,
         FOREIGN KEY (senderId) REFERENCES users(id) ON DELETE CASCADE
@@ -66,15 +83,6 @@ const initTables = () => {
         console.error("❌ Failed to initialize messages table:", err);
       } else {
         console.log("✅ messages table initialized successfully");
-        
-        // Upgrade messages.text to LONGTEXT to support base64 images and audio notes
-        db.query("ALTER TABLE messages MODIFY COLUMN text LONGTEXT NOT NULL", (alterErr) => {
-          if (alterErr) {
-            console.error("❌ Failed to upgrade messages.text column to LONGTEXT:", alterErr);
-          } else {
-            console.log("✅ Upgraded messages.text column to LONGTEXT successfully");
-          }
-        });
       }
     });
 
@@ -162,19 +170,23 @@ const initTables = () => {
       }
     });
 
-    // Check and add is_read column to messages table
-    const checkIsReadColumn = `
+    const checkLastSeenColumn = `
       SELECT COUNT(*) AS count FROM information_schema.columns 
-      WHERE table_schema = DATABASE() AND table_name = 'messages' AND column_name = 'is_read'
+      WHERE table_schema = DATABASE() AND table_name = 'users' AND column_name = 'lastSeen'
     `;
-    db.query(checkIsReadColumn, (err, results) => {
+    db.query(checkLastSeenColumn, (err, results) => {
       if (!err && results && results[0] && results[0].count === 0) {
-        db.query(`ALTER TABLE messages ADD COLUMN is_read TINYINT(1) DEFAULT 0`, (alterErr) => {
-          if (alterErr) console.error("❌ Failed to add is_read column to messages:", alterErr);
-          else console.log("✅ Added is_read column to messages table successfully");
+        db.query(`ALTER TABLE users ADD COLUMN lastSeen TIMESTAMP NULL DEFAULT NULL`, (alterErr) => {
+          if (alterErr) {
+            console.error("❌ Failed to add lastSeen column:", alterErr);
+          } else {
+            console.log("✅ added lastSeen column to users table successfully");
+          }
         });
       }
     });
+
+    // is_read column is now initialized directly inside the createMessagesTable definition DDL.
 
     // Check and add is_read column to group_messages table
     const checkGroupIsReadColumn = `
@@ -208,7 +220,7 @@ const initTables = () => {
 initTables();
 
 // Load environment variables from .env file
-dotenv.config()
+dotenv.config({ override: true })
 
 const app = express()
 app.use(express.json({ limit: '50mb' }));
@@ -229,6 +241,13 @@ app.use(cors(
 // Mount authentication endpoints
 app.use('/api/auth', authRoutes)
 
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')))
+
+// Mount user management endpoints
+app.use('/api/users', usersRoutes)
+
 const PORT = process.env.PORT || 8081;
 const httpServer = createServer(app);
 
@@ -240,28 +259,68 @@ const io = new Server(httpServer, {
   }
 });
 
+const activeCalls = new Map();
+
 io.on("connection", (socket) => {
   console.log(`🔌 Client connected: ${socket.id}`);
 
-  // User joins their personal room
+  // Helper to mark a user online
+  const markUserOnline = (userId) => {
+    if (!userId) return;
+    const room = `user_${userId}`;
+    socket.join(room);
+    socket.userId = userId;
+    console.log(`👤 Socket ${socket.id} registered (userId: ${userId})`);
+
+    db.query("UPDATE users SET isOnline = 1 WHERE id = ?", [userId], (err) => {
+      if (err) {
+        console.error(`❌ Failed to update presence for user ${userId}:`, err);
+      } else {
+        console.log(`🟢 User ${userId} is now ONLINE in database`);
+        
+        // Broadcast online presence via both event standards
+        io.emit("user-online", { userId });
+        io.emit("presence_update", {
+          userId,
+          status: 'online'
+        });
+
+        // Send current active users list
+        const activeUserIds = Array.from(io.sockets.sockets.values())
+          .map(s => s.userId)
+          .filter(Boolean);
+        io.emit("active-users", activeUserIds);
+      }
+    });
+  };
+
+  // Support both join-user-room (Web) and user_online (Mobile)
   socket.on("join-user-room", (userId) => {
+    markUserOnline(userId);
+  });
+
+  socket.on("user_online", (data) => {
+    markUserOnline(data?.userId);
+  });
+
+  // Support manual user_offline event
+  socket.on("user_offline", (data) => {
+    const userId = data?.userId || socket.userId;
     if (userId) {
-      const room = `user_${userId}`;
-      socket.join(room);
-      socket.userId = userId;
-      console.log(`👤 Socket ${socket.id} joined room: ${room} (userId: ${userId})`);
-
-      // Update database isOnline status to 1
-      db.query("UPDATE users SET isOnline = 1 WHERE id = ?", [userId], (err) => {
+      db.query("UPDATE users SET isOnline = 0, lastSeen = CURRENT_TIMESTAMP WHERE id = ?", [userId], (err) => {
         if (err) {
-          console.error(`❌ Failed to update presence for user ${userId}:`, err);
+          console.error(`❌ Failed to update presence offline for user ${userId}:`, err);
         } else {
-          console.log(`🟢 User ${userId} is now ONLINE in database`);
+          console.log(`🔴 User ${userId} is now OFFLINE (manual event)`);
           
-          // Broadcast to everyone
-          io.emit("user-online", { userId });
+          io.emit("user-offline", { userId });
+          io.emit("presence_update", {
+            userId,
+            status: 'offline',
+            lastSeen: new Date()
+          });
 
-          // Send current active users list
+          // Broadcast new active users list
           const activeUserIds = Array.from(io.sockets.sockets.values())
             .map(s => s.userId)
             .filter(Boolean);
@@ -271,31 +330,33 @@ io.on("connection", (socket) => {
     }
   });
 
-  // Typing start
-  socket.on("typing-start", (data) => {
+  // Typing start (supports both formats)
+  const handleTypingStart = (data) => {
     const { conversationId, senderId, receiverId } = data;
     console.log(`✏️ User ${senderId} started typing in conversation ${conversationId}`);
     if (receiverId) {
-      io.to(`user_${receiverId}`).emit("typing-start", {
-        conversationId,
-        senderId,
-        receiverId
-      });
+      const room = `user_${receiverId}`;
+      io.to(room).emit("typing-start", { conversationId, senderId, receiverId });
+      io.to(room).emit("typing_start", { conversationId, senderId, receiverId });
     }
-  });
+  };
 
-  // Typing stop
-  socket.on("typing-stop", (data) => {
+  socket.on("typing-start", handleTypingStart);
+  socket.on("typing_start", handleTypingStart);
+
+  // Typing stop (supports both formats)
+  const handleTypingStop = (data) => {
     const { conversationId, senderId, receiverId } = data;
     console.log(`🛑 User ${senderId} stopped typing in conversation ${conversationId}`);
     if (receiverId) {
-      io.to(`user_${receiverId}`).emit("typing-stop", {
-        conversationId,
-        senderId,
-        receiverId
-      });
+      const room = `user_${receiverId}`;
+      io.to(room).emit("typing-stop", { conversationId, senderId, receiverId });
+      io.to(room).emit("typing_stop", { conversationId, senderId, receiverId });
     }
-  });
+  };
+
+  socket.on("typing-stop", handleTypingStop);
+  socket.on("typing_stop", handleTypingStop);
 
   // Handle realtime new message routing
   socket.on("new-message", (data) => {
@@ -303,10 +364,8 @@ io.on("connection", (socket) => {
     console.log(`✉️ Realtime Message: sender ${senderId} to ${group ? 'group' : 'user ' + receiverId} in conv ${conversationId}`);
     
     if (group) {
-      // Group Chat: Broadcast to everyone except the sender
       socket.broadcast.emit("new-message", data);
     } else if (receiverId) {
-      // 1-on-1 Chat: Emit directly to receiver's personal room
       io.to(`user_${receiverId}`).emit("new-message", data);
     }
   });
@@ -315,28 +374,120 @@ io.on("connection", (socket) => {
   socket.on("message-read", (data) => {
     const { conversationId, userId } = data;
     console.log(`👁️ Realtime Read Receipt: conversationId ${conversationId} read by ${userId}`);
-    // Broadcast to everyone else to clear unread counts on all devices/sessions
     socket.broadcast.emit("message-read", data);
+  });
+
+  // ==========================================
+  // REAL-TIME VOICE CALLING RELAYS
+  // ==========================================
+  
+  // User A starts call -> Relayed to User B
+  socket.on("call:start", (data) => {
+    const { senderId, receiverId, callerName, callerAvatar } = data;
+    console.log(`📞 Socket Call Start: from user ${senderId} to user ${receiverId}`);
+    activeCalls.set(Number(senderId), Number(receiverId));
+    activeCalls.set(Number(receiverId), Number(senderId));
+    io.to(`user_${receiverId}`).emit("incoming-call", data);
+  });
+
+  // User B's device is ringing -> Relayed to User A
+  socket.on("call:ringing", (data) => {
+    const { senderId, receiverId } = data;
+    console.log(`📞 Socket Call Ringing: user ${receiverId} is ringing (caller is ${senderId})`);
+    io.to(`user_${senderId}`).emit("call:ringing", data);
+  });
+
+  // User B accepts call -> Relayed to User A
+  socket.on("call:accepted", (data) => {
+    const { senderId, receiverId } = data;
+    console.log(`📞 Socket Call Accepted: by user ${receiverId} (caller is ${senderId})`);
+    io.to(`user_${senderId}`).emit("call:accepted", data);
+  });
+
+  // User B rejects call -> Relayed to User A
+  socket.on("call:rejected", (data) => {
+    const { senderId, receiverId } = data;
+    console.log(`📞 Socket Call Rejected: by user ${receiverId} (caller is ${senderId})`);
+    activeCalls.delete(Number(senderId));
+    activeCalls.delete(Number(receiverId));
+    io.to(`user_${senderId}`).emit("call:rejected", data);
+  });
+
+  // Either user ends call -> Relayed to both users
+  socket.on("call:ended", (data) => {
+    const { senderId, receiverId } = data;
+    console.log(`📞 Socket Call Ended: session between ${senderId} and ${receiverId}`);
+    activeCalls.delete(Number(senderId));
+    activeCalls.delete(Number(receiverId));
+    io.to(`user_${senderId}`).emit("call:ended", data);
+    io.to(`user_${receiverId}`).emit("call:ended", data);
+  });
+
+  // Call missed (no answer timeout) -> Relayed to User A
+  socket.on("call:missed", (data) => {
+    const { senderId, receiverId } = data;
+    console.log(`📞 Socket Call Missed: no answer from ${receiverId} to ${senderId}`);
+    activeCalls.delete(Number(senderId));
+    activeCalls.delete(Number(receiverId));
+    io.to(`user_${senderId}`).emit("call:missed", data);
+  });
+
+  // WebRTC Offer relay
+  socket.on("webrtc-offer", (data) => {
+    const { receiverId } = data;
+    console.log(`📡 Relaying webrtc-offer from ${data.senderId} to ${receiverId}`);
+    io.to(`user_${receiverId}`).emit("webrtc-offer", data);
+  });
+
+  // WebRTC Answer relay
+  socket.on("webrtc-answer", (data) => {
+    const { receiverId } = data;
+    console.log(`📡 Relaying webrtc-answer from ${data.senderId} to ${receiverId}`);
+    io.to(`user_${receiverId}`).emit("webrtc-answer", data);
+  });
+
+  // WebRTC ICE Candidate relay
+  socket.on("ice-candidate", (data) => {
+    const { receiverId } = data;
+    io.to(`user_${receiverId}`).emit("ice-candidate", data);
   });
 
   socket.on("disconnect", () => {
     console.log(`🔌 Client disconnected: ${socket.id}`);
     const userId = socket.userId;
     if (userId) {
+      // Check if user is in an active call
+      const peerId = activeCalls.get(Number(userId));
+      if (peerId) {
+        console.log(`🔌 Call participant ${userId} disconnected. Notifying ${peerId}`);
+        io.to(`user_${peerId}`).emit("call:ended", {
+          senderId: userId,
+          receiverId: peerId,
+          statusText: 'User Disconnected'
+        });
+        activeCalls.delete(Number(userId));
+        activeCalls.delete(Number(peerId));
+      }
+
       // Check if there are any other sockets open for this same user
       const otherSockets = Array.from(io.sockets.sockets.values())
         .filter(s => s.userId === userId && s.id !== socket.id);
 
       if (otherSockets.length === 0) {
         // No other active connections for this user, mark as offline in DB
-        db.query("UPDATE users SET isOnline = 0 WHERE id = ?", [userId], (err) => {
+        db.query("UPDATE users SET isOnline = 0, lastSeen = CURRENT_TIMESTAMP WHERE id = ?", [userId], (err) => {
           if (err) {
             console.error(`❌ Failed to update presence offline for user ${userId}:`, err);
           } else {
             console.log(`🔴 User ${userId} is now OFFLINE in database`);
             
-            // Broadcast offline state
+            // Broadcast offline state via both event standards
             io.emit("user-offline", { userId });
+            io.emit("presence_update", {
+              userId,
+              status: 'offline',
+              lastSeen: new Date()
+            });
 
             // Broadcast new active users list
             const activeUserIds = Array.from(io.sockets.sockets.values())

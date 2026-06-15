@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { io } from 'socket.io-client';
+import { useCall } from '../Calling/CallContext';
 import { 
   Search, 
   Settings, 
@@ -388,6 +389,7 @@ const MessageBubble = React.memo(({ msg, isYou, isConsecutive, group, activeChat
 
 export default function ChatingHome() {
   const navigate = useNavigate();
+  const { startCall } = useCall();
   const [chats, setChats] = useState(initialChats);
   const [activeChatId, setActiveChatId] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -1243,7 +1245,16 @@ export default function ChatingHome() {
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
-    setIsCurrentUserTyping(false);
+    if (isCurrentUserTyping) {
+      setIsCurrentUserTyping(false);
+      if (socketRef.current) {
+        socketRef.current.emit('typing-stop', {
+          conversationId: activeChatId,
+          senderId: currentUser.id,
+          receiverId: activeChat.otherUserId
+        });
+      }
+    }
 
     const senderId = getCurrentUserId();
     const conversationId = activeChatId;
@@ -2018,14 +2029,28 @@ export default function ChatingHome() {
                   {!activeChat.group && (
                     <>
                       <motion.button 
-                        onClick={() => startSimulatedCall('voice')}
+                        onClick={() => {
+                          startCall({
+                            id: activeChat.otherUserId,
+                            name: activeChat.name,
+                            avatarUrl: (activeChat.avatar && (activeChat.avatar.startsWith('data:') || activeChat.avatar.startsWith('http'))) ? activeChat.avatar : null,
+                            phoneNumber: ''
+                          });
+                        }}
                         whileTap={{ scale: 0.95 }}
                         className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-slate-100/40 text-slate-500 hover:text-indigo-600 transition-colors cursor-pointer"
                       >
                         <Phone className="w-4 h-4" />
                       </motion.button>
                       <motion.button 
-                        onClick={() => startSimulatedCall('video')}
+                        onClick={() => {
+                          startCall({
+                            id: activeChat.otherUserId,
+                            name: activeChat.name,
+                            avatarUrl: (activeChat.avatar && (activeChat.avatar.startsWith('data:') || activeChat.avatar.startsWith('http'))) ? activeChat.avatar : null,
+                            phoneNumber: ''
+                          });
+                        }}
                         whileTap={{ scale: 0.95 }}
                         className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-slate-100/40 text-slate-500 hover:text-indigo-600 transition-colors cursor-pointer"
                       >
@@ -2475,128 +2500,7 @@ export default function ChatingHome() {
         )}
       </AnimatePresence>
 
-      {/* ================= SIMULATED CALL MODAL OVERLAY ================= */}
-      <AnimatePresence>
-        {showCallModal && (
-          <div className="fixed inset-0 w-full h-dvh flex items-center justify-center z-[150] p-4">
-            {/* Extremely deep dark frosted backdrop */}
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-slate-950/80 backdrop-blur-[15px]"
-            />
 
-            {/* Calling Screen Container */}
-            <motion.div 
-              initial={{ scale: 0.9, opacity: 0, y: 30 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 30 }}
-              transition={{ type: "spring", damping: 28, stiffness: 320 }}
-              className="w-full max-w-sm bg-white/10 backdrop-blur-[25px] border border-white/10 rounded-[32px] shadow-2xl p-8 z-10 flex flex-col items-center justify-between min-h-[500px] text-white relative overflow-hidden"
-            >
-              {/* Neon abstract backglow */}
-              <div className="absolute top-[-20%] left-[-20%] w-[200px] h-[200px] rounded-full bg-violet-500/20 blur-[80px] pointer-events-none" />
-              <div className="absolute bottom-[-20%] right-[-20%] w-[200px] h-[200px] rounded-full bg-indigo-500/20 blur-[80px] pointer-events-none" />
-
-              {/* Status Header */}
-              <div className="text-center w-full mt-4 select-none">
-                <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest bg-white/5 border border-white/10 px-3 py-1.5 rounded-full">
-                  Bloop Secure Call
-                </span>
-                <h3 className="text-[20px] font-extrabold mt-6 leading-tight truncate px-4">
-                  {activeChat?.name}
-                </h3>
-                
-                {callStatus === 'ringing' ? (
-                  <p className="text-[12.5px] text-indigo-400 font-bold mt-2 animate-pulse">Ringing...</p>
-                ) : callStatus === 'connected' ? (
-                  <p className="text-[13px] text-emerald-400 font-bold mt-2 font-mono tracking-wide">
-                    Connected • {formatDuration(callDuration)}
-                  </p>
-                ) : (
-                  <p className="text-[12.5px] text-rose-500 font-bold mt-2">Call Ended</p>
-                )}
-              </div>
-
-              {/* Glowing Pulsing Avatar Ring */}
-              <div className="relative my-10 flex items-center justify-center">
-                {/* Outermost ring */}
-                <motion.div 
-                  animate={callStatus === 'ringing' ? { scale: [1, 1.35, 1], opacity: [0.15, 0.4, 0.15] } : {}}
-                  transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
-                  className="absolute w-44 h-44 rounded-full border border-indigo-500/30"
-                />
-                
-                {/* Inner ring */}
-                <motion.div 
-                  animate={callStatus === 'ringing' ? { scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] } : {}}
-                  transition={{ repeat: Infinity, duration: 2, ease: "easeInOut", delay: 0.5 }}
-                  className="absolute w-36 h-36 rounded-full border border-violet-500/40"
-                />
-
-                {/* Avatar itself */}
-                <div className={`w-28 h-28 rounded-full bg-gradient-to-tr ${activeChat?.avatarColor || 'from-violet-500 to-indigo-500'} text-white flex items-center justify-center font-extrabold text-[32px] shadow-2xl relative overflow-hidden select-none border border-white/20 z-10`}>
-                  {activeChat?.avatar && (activeChat.avatar.startsWith('data:image') || activeChat.avatar.includes('/') || activeChat.avatar.length > 2) ? (
-                    <img src={activeChat.avatar} alt="Avatar" className="w-full h-full object-cover" />
-                  ) : (
-                    activeChat?.name ? activeChat.name.charAt(0).toUpperCase() : 'B'
-                  )}
-                </div>
-
-                {/* Status indicator on avatar */}
-                {callStatus === 'connected' && (
-                  <span className="absolute bottom-1 right-2 w-5.5 h-5.5 bg-emerald-500 rounded-full border-4 border-slate-900/60 z-20 animate-pulse flex items-center justify-center">
-                    <span className="w-1.5 h-1.5 bg-white rounded-full" />
-                  </span>
-                )}
-              </div>
-
-              {/* Action Buttons Console */}
-              <div className="w-full flex flex-col items-center space-y-8 z-10 mb-2">
-                <div className="flex items-center justify-center space-x-6">
-                  {/* Mute button */}
-                  <motion.button 
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => setIsMuted(!isMuted)}
-                    className={`w-12 h-12 rounded-full border flex items-center justify-center transition-all cursor-pointer ${
-                      isMuted 
-                        ? 'bg-rose-500/20 border-rose-500 text-rose-500 shadow-lg shadow-rose-500/10' 
-                        : 'bg-white/5 border-white/10 text-white hover:bg-white/10'
-                    }`}
-                  >
-                    {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
-                  </motion.button>
-
-                  {/* Red End Call Button */}
-                  <motion.button 
-                    whileHover={{ scale: 1.08 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={endSimulatedCall}
-                    className="w-15 h-15 rounded-full bg-gradient-to-tr from-rose-500 to-red-600 flex items-center justify-center text-white shadow-xl shadow-red-500/30 cursor-pointer"
-                  >
-                    <PhoneOff className="w-6 h-6" />
-                  </motion.button>
-
-                  {/* Speaker toggle */}
-                  <motion.button 
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => setIsSpeakerOn(!isSpeakerOn)}
-                    className={`w-12 h-12 rounded-full border flex items-center justify-center transition-all cursor-pointer ${
-                      isSpeakerOn 
-                        ? 'bg-indigo-500/20 border-indigo-500 text-indigo-400 shadow-lg shadow-indigo-500/10' 
-                        : 'bg-white/5 border-white/10 text-white hover:bg-white/10'
-                    }`}
-                  >
-                    <Volume2 className="w-5 h-5" />
-                  </motion.button>
-                </div>
-              </div>
-
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
 
       {/* ================= FULL-SCREEN IMAGE PREVIEW OVERLAY ================= */}
       <AnimatePresence>
