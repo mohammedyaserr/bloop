@@ -390,6 +390,16 @@ const MessageBubble = React.memo(({ msg, isYou, isConsecutive, group, activeChat
 export default function ChatingHome() {
   const navigate = useNavigate();
   const { startCall } = useCall();
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const [chats, setChats] = useState(initialChats);
   const [activeChatId, setActiveChatId] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -1423,7 +1433,10 @@ export default function ChatingHome() {
       >
         
         {/* ================= COLUMN 1: LEFT NAVIGATION SIDEBAR (Slim Vertical) ================= */}
-        <div className="w-[76px] h-full left-sidebar-col border-r border-slate-200/40 flex flex-col items-center justify-between py-6 bg-white/15 backdrop-blur-[15px] z-20 shrink-0 select-none">
+        <div 
+          style={{ display: isMobile && activeChatId ? 'none' : 'flex' }}
+          className="w-[76px] h-full left-sidebar-col border-r border-slate-200/40 flex flex-col items-center justify-between py-6 bg-white/15 backdrop-blur-[15px] z-20 shrink-0 select-none"
+        >
           
           {/* Top Logo & Branding */}
           <div className="flex flex-col items-center space-y-2">
@@ -1562,7 +1575,10 @@ export default function ChatingHome() {
         </div>
 
         {/* ================= COLUMN 2: MIDDLE CHAT LIST SIDEBAR (Telegram Web Style) ================= */}
-        <div className="w-[340px] h-full middle-sidebar-col border-r border-slate-200/40 flex flex-col overflow-hidden bg-white/10 backdrop-blur-[10px] shrink-0 z-10">
+        <div 
+          style={{ display: isMobile && activeChatId ? 'none' : 'flex', width: isMobile ? 'calc(100% - 76px)' : '340px' }}
+          className="w-[340px] h-full middle-sidebar-col border-r border-slate-200/40 flex flex-col overflow-hidden bg-white/10 backdrop-blur-[10px] shrink-0 z-10"
+        >
           
           {/* Stack-safe click-away backdrop */}
           {isSearchFocused && (
@@ -1959,7 +1975,10 @@ export default function ChatingHome() {
         </div>
 
         {/* ================= COLUMN 3: RIGHT ACTIVE CHAT SECTION ================= */}
-        <div className="flex-1 h-full right-chat-col flex flex-col overflow-hidden bg-white/20 backdrop-blur-[5px] relative">
+        <div 
+          style={{ display: isMobile && !activeChatId ? 'none' : 'flex' }}
+          className="flex-1 h-full right-chat-col flex flex-col overflow-hidden bg-white/20 backdrop-blur-[5px] relative"
+        >
           
           {activeChat ? (
             <>
@@ -1967,9 +1986,19 @@ export default function ChatingHome() {
               <div className="pt-6 pb-4 px-4 border-b border-slate-200/50 flex items-center justify-between bg-white/10 z-10">
                 
                 {/* Active profile text */}
-                <div 
-                  className={`flex items-center space-x-3 select-none ${activeChat.group ? 'cursor-pointer hover:opacity-90' : ''}`}
-                  onClick={() => {
+                <div className="flex items-center space-x-2 select-none">
+                  {isMobile && (
+                    <button
+                      onClick={() => setActiveChatId(null)}
+                      className="mr-1 p-1.5 rounded-xl hover:bg-slate-100/40 text-slate-500 hover:text-indigo-600 transition-colors cursor-pointer"
+                      title="Back to Chats"
+                    >
+                      <ChevronRight className="w-5 h-5 transform rotate-180" />
+                    </button>
+                  )}
+                  <div 
+                    className={`flex items-center space-x-3 ${activeChat.group ? 'cursor-pointer hover:opacity-90' : ''}`}
+                    onClick={() => {
                     if (activeChat.group) {
                       const gId = activeChat.groupId || activeChat.id.replace('group_', '');
                       fetchGroupInfo(gId);
@@ -2023,6 +2052,7 @@ export default function ChatingHome() {
                     )}
                   </div>
                 </div>
+              </div>
 
                 {/* Quick Actions Panel */}
                 <div className="flex items-center space-x-1">

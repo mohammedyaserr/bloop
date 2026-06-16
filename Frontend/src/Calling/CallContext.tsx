@@ -295,6 +295,10 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const checkUser = () => {
+      // If a call is active or in progress, do not clear the user or trigger reconnects.
+      if (isCallActiveRef.current || callStateRef.current !== 'idle') {
+        return;
+      }
       const user = getLoggedInUser();
       if (!user && currentUser) {
         setCurrentUser(null);
@@ -518,6 +522,7 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const userId = currentUser?.id;
     if (!userId) {
       if (socket) {
+        console.log("SOCKET DISCONNECT");
         socket.disconnect();
         setSocket(null);
         socketRef.current = null;
@@ -548,6 +553,11 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const currentUserId = currentUserRef.current?.id;
       // If we are already in an active session, automatically decline (busy)
       if (isCallActiveRef.current || callStateRef.current !== 'idle') {
+        // If it's a duplicate incoming-call event from the same sender, ignore it rather than rejecting it
+        if (callStateRef.current === 'incoming' && remoteUserRef.current?.id === data.senderId) {
+          console.log("DUPLICATE INCOMING CALL EVENT IGNORED");
+          return;
+        }
         console.log("AUTO REJECT");
         console.log("CALL REJECTED EMITTED", { senderId: data.senderId, receiverId: currentUserId });
         socketInstance.emit('call:rejected', {
@@ -671,6 +681,11 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Handle Call Rejected Event (Caller side)
     socketInstance.on('call:rejected', (data: any) => {
       console.log("CALL REJECTED RECEIVED", data);
+      console.log("CALL STATE", callStateRef.current);
+      if (callStateRef.current === 'incoming') {
+        console.log("CALL REJECTED RECEIVED DURING INCOMING CALL - IGNORED TO KEEP UI VISIBLE");
+        return;
+      }
       
       if (toneGen.current) toneGen.current.playDisconnectBeep();
       setEndedStatusText('Call Rejected');
@@ -684,6 +699,11 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     socketInstance.on('call:ended', (data: any) => {
       const currentUserId = currentUserRef.current?.id;
       console.log(`[CallEvent] call:ended (receive) | Sender: ${data.senderId} | Receiver: ${currentUserId} | Timestamp: ${new Date().toISOString()} | Payload:`, data);
+      console.log("CALL STATE", callStateRef.current);
+      if (callStateRef.current === 'incoming') {
+        console.log("CALL ENDED RECEIVED DURING INCOMING CALL - IGNORED TO KEEP UI VISIBLE");
+        return;
+      }
       
       if (toneGen.current) toneGen.current.playDisconnectBeep();
       setEndedStatusText(data.statusText || 'Call Ended');
@@ -697,6 +717,11 @@ export const CallProvider: React.FC<{ children: React.ReactNode }> = ({ children
     socketInstance.on('call:missed', (data: any) => {
       const currentUserId = currentUserRef.current?.id;
       console.log(`[CallEvent] call:missed (receive) | Sender: ${data.senderId} | Receiver: ${currentUserId} | Timestamp: ${new Date().toISOString()} | Payload:`, data);
+      console.log("CALL STATE", callStateRef.current);
+      if (callStateRef.current === 'incoming') {
+        console.log("CALL MISSED RECEIVED DURING INCOMING CALL - IGNORED TO KEEP UI VISIBLE");
+        return;
+      }
       
       if (toneGen.current) toneGen.current.playDisconnectBeep();
       setEndedStatusText('No Answer');
