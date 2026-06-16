@@ -1434,7 +1434,7 @@ export default function ChatingHome() {
         
         {/* ================= COLUMN 1: LEFT NAVIGATION SIDEBAR (Slim Vertical) ================= */}
         <div 
-          style={{ display: isMobile && activeChatId ? 'none' : 'flex' }}
+          style={{ display: isMobile ? 'none' : 'flex' }}
           className="w-[76px] h-full left-sidebar-col border-r border-slate-200/40 flex flex-col items-center justify-between py-6 bg-white/15 backdrop-blur-[15px] z-20 shrink-0 select-none"
         >
           
@@ -1576,7 +1576,7 @@ export default function ChatingHome() {
 
         {/* ================= COLUMN 2: MIDDLE CHAT LIST SIDEBAR (Telegram Web Style) ================= */}
         <div 
-          style={{ display: isMobile && activeChatId ? 'none' : 'flex', width: isMobile ? 'calc(100% - 76px)' : '340px' }}
+          style={{ display: isMobile && activeChatId ? 'none' : 'flex', width: isMobile ? '100%' : '340px' }}
           className="w-[340px] h-full middle-sidebar-col border-r border-slate-200/40 flex flex-col overflow-hidden bg-white/10 backdrop-blur-[10px] shrink-0 z-10"
         >
           
